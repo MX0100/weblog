@@ -1,0 +1,322 @@
+/* 富文本编辑器容器 */
+.rich-text-editor {
+  position: relative;
+  background-color: #ffffff; /* White background */
+  border: 1px solid #e2e8f0; /* Light gray border */
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  z-index: 1; /* Ensure editor is not overlapped */
+}
+
+.rich-text-editor:focus-within {
+  border-color: #4f46e5; /* Primary color */
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+/* Quill编辑器样式覆盖 */
+.rich-text-editor .ql-container {
+  border: none;
+  font-size: 1rem;
+  color: #1f2937; /* Dark gray for main text */
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 120px;
+  padding: 12px 16px;
+  line-height: 1.6;
+  border: 1px solid var(--border-color);
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  color: #9ca3af; /* Lighter gray for placeholder */
+  margin-right: 2px;
+  font-style: normal;
+}
+
+/* 工具栏样式 */
+.rich-text-editor .ql-toolbar {
+  display: flex;
+  align-items: center; /* This helps but isn't enough */
+  flex-wrap: wrap;
+  padding: 12px 8px; /* Add some padding */
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-color-secondary);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+/* === CRITICAL: Make the intermediate <span> groups 'disappear' for layout === */
+.rich-text-editor .ql-snow .ql-formats {
+  display: contents; /* This promotes buttons to be direct flex items of the toolbar */
+}
+
+/* Style for icon-only buttons */
+.rich-text-editor .ql-snow button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+}
+
+/* Specific styles for the dropdown picker (e.g., "Normal") */
+.rich-text-editor .ql-snow .ql-picker {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  width: auto;
+  border-radius: 6px;
+  padding: 0 8px;
+  border: none; /* Ensure no extra border */
+}
+
+.rich-text-editor .ql-snow .ql-picker-label {
+  display: flex;
+  align-items: center;
+}
+
+/* Add space between dropdown text and its arrow icon */
+.rich-text-editor .ql-snow .ql-picker-label svg {
+  margin-left: 4px;
+}
+
+.rich-text-editor .ql-snow svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Surgical fix for align icons that are not visually centered in their viewBox */
+.rich-text-editor .ql-snow .ql-align svg {
+  position: relative;
+  top: 1px; /* Nudge down by 1 pixel */
+}
+
+/* ====================================================== */
+
+/* === CRITICAL: Force SVG icon colors to be visible on light background === */
+.rich-text-editor .ql-snow .ql-stroke {
+  stroke: #4b5563; /* Medium gray for icons */
+}
+.rich-text-editor .ql-snow .ql-fill {
+  fill: #4b5563;
+}
+.rich-text-editor .ql-snow .ql-picker-label {
+  color: #1f2937; /* Dark gray for text */
+}
+
+/* Button hover/active states */
+.rich-text-editor .ql-snow button:hover,
+.rich-text-editor .ql-snow .ql-picker-label:hover {
+  background-color: #eef2ff; /* Light primary color on hover */
+}
+.rich-text-editor .ql-snow button:hover .ql-stroke,
+.rich-text-editor .ql-snow .ql-picker-label:hover .ql-stroke {
+  stroke: #4f46e5; /* Primary color for icons on hover */
+}
+
+.rich-text-editor .ql-snow .ql-active .ql-stroke,
+.rich-text-editor .ql-snow .ql-picker-label.ql-active .ql-stroke {
+  stroke: #4f46e5;
+}
+.rich-text-editor .ql-snow .ql-active .ql-fill {
+  fill: #4f46e5;
+}
+.rich-text-editor .ql-snow .ql-picker-label.ql-active {
+  color: #4f46e5;
+}
+
+/* 页脚样式 */
+.rich-text-editor__footer {
+  position: relative;
+  padding: 4px 12px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #6b7280;
+  z-index: 2; /* Ensure footer is on top of editor content */
+}
+
+.char-count {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.char-count.warning {
+  color: #ef4444;
+}
+
+.rich-text-editor__footer .image-upload-hint {
+  color: #6b7280;
+}
+
+/* 禁用状态 */
+.rich-text-editor .ql-editor[disabled] {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.rich-text-editor .ql-toolbar[disabled] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .rich-text-editor .ql-toolbar {
+    padding: 8px 12px;
+  }
+
+  .rich-text-editor .ql-toolbar .ql-formats {
+    margin-right: 8px;
+  }
+
+  .rich-text-editor .ql-editor {
+    padding: 12px;
+    min-height: 100px;
+  }
+
+  .rich-text-editor__footer {
+    padding: 6px 12px;
+  }
+}
+
+/* 自定义样式类 */
+.rich-text-editor.compact {
+  border-radius: 6px;
+}
+
+.rich-text-editor.compact .ql-toolbar {
+  padding: 8px 12px;
+  border-radius: 6px 6px 0 0;
+}
+
+.rich-text-editor.compact .ql-editor {
+  padding: 12px;
+  min-height: 80px;
+}
+
+.rich-text-editor.compact .rich-text-editor__footer {
+  padding: 6px 12px;
+  border-radius: 0 0 6px 6px;
+}
+
+/* 错误状态 */
+.rich-text-editor.error {
+  border-color: #ef4444;
+}
+
+.rich-text-editor.error:focus-within {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Uniform style for all square, icon-only controls (buttons and pickers) */
+.rich-text-editor .ql-toolbar .ql-formats button,
+.rich-text-editor .ql-toolbar .ql-formats .ql-picker.ql-color,
+.rich-text-editor .ql-toolbar .ql-formats .ql-picker.ql-background,
+.rich-text-editor .ql-toolbar .ql-formats .ql-picker.ql-align {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 28px;
+  margin: 2px;
+  padding: 4px;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s;
+}
+
+/* Specific style for pickers that contain text labels */
+.rich-text-editor .ql-toolbar .ql-formats .ql-picker.ql-header {
+  display: flex;
+  align-items: center;
+  height: 28px; /* Match button height for alignment */
+  margin: 2px;
+  /* More right padding to prevent text overlapping the arrow icon */
+  padding: 4px 12px 4px 8px;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s;
+}
+
+/* The generic .ql-picker rule is now replaced by the more specific rules above. */
+/*
+.rich-text-editor .ql-toolbar .ql-formats .ql-picker {
+  display: flex;
+  align-items: center;
+  height: 28px; 
+  margin: 2px;
+  padding: 4px 12px 4px 8px;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s;
+}
+*/
+
+.rich-text-editor .ql-editor::placeholder {
+  color: var(--text-color-tertiary);
+  font-style: normal;
+}
+
+/*
+ * Dropdown Menu Styles
+ * --------------------
+ * Custom styling for the picker (dropdown) options to match the app's theme
+ * and fix oversized heading fonts.
+ */
+
+.rich-text-editor .ql-snow .ql-picker-options .ql-picker-item {
+  color: var(--text-color-primary);
+  padding: 4px 12px;
+  line-height: 1.5;
+  /* Override Quill's huge header font sizes to keep the dropdown clean */
+  font-size: 14px !important;
+}
+
+.rich-text-editor .ql-snow .ql-picker-options .ql-picker-item:hover {
+  background-color: var(--background-color-tertiary);
+}
+
+.rich-text-editor .ql-container {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/*
+ * Font-size override for Header dropdown
+ * ---------------------------------------
+ * QuillJS uses `::before` pseudo-elements with large `em` font sizes for
+ * header options. We override this here for both the dropdown items and
+ * the selected label shown in the toolbar to maintain a consistent UI.
+ */
+.rich-text-editor .ql-snow .ql-picker.ql-header .ql-picker-label::before,
+.rich-text-editor .ql-snow .ql-picker.ql-header .ql-picker-item::before {
+  font-size: 14px;
+}
+
+/*
+ * Icon Size Correction using transform:scale
+ * -------------------------------------------
+ * Some icons (lists, align) appear visually smaller due to their internal
+ * padding/design. We use `transform:scale` to enlarge them visually without
+ * altering their layout box, creating a more balanced look.
+ */
+.rich-text-editor .ql-snow .ql-list svg,
+.rich-text-editor .ql-snow .ql-picker.ql-align svg {
+  transform: scale(1.15);
+}
+
+.rich-text-editor .ql-snow .ql-picker.ql-header .ql-picker-label::before {
+  margin-right: 16px;
+}
+.rich-text-editor .ql-snow .ql-color .ql-picker-label svg,
+.ql-background .ql-picker-label svg,
+.rich-text-editor .ql-snow .ql-align .ql-picker-label svg {
+  transform: scale(2.98);
+}

@@ -1,0 +1,30 @@
+package io.github.mx0100.weblog.config;
+
+import io.github.mx0100.weblog.security.WebSocketAuthInterceptor;
+import io.github.mx0100.weblog.service.NotificationWebSocketHandler;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+
+/**
+ * WebSocket configuration
+ * 
+ * @author mx0100
+ */
+@Configuration
+@EnableWebSocket
+@RequiredArgsConstructor
+public class WebSocketConfig implements WebSocketConfigurer {
+
+    private final NotificationWebSocketHandler webSocketHandler;
+    private final WebSocketAuthInterceptor authInterceptor;
+
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(webSocketHandler, "/ws/notifications")
+                .addInterceptors(authInterceptor)
+                .setAllowedOrigins("*"); // 在生产环境中应该配置具体的域名
+    }
+} 

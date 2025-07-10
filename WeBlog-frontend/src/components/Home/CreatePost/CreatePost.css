@@ -1,0 +1,33 @@
+.create-post-form {
+  background-color: var(--background-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease-in-out;
+  animation: slide-down 0.5s ease-out;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.create-post-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.create-post-actions {
+  display: flex;
+  gap: 8px;
+}

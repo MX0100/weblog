@@ -1,0 +1,133 @@
+/* Register Component Styles */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.auth-subtitle {
+  font-size: 16px;
+  text-align: center;
+  color: #666;
+  margin-bottom: 32px;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.loading-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.auth-footer p {
+  color: #666;
+  font-size: 14px;
+}
+
+.auth-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* Gender selector styles */
+.gender-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gender-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gender-option:hover {
+  border-color: #007bff;
+  background-color: #f8f9ff;
+}
+
+.gender-option.selected {
+  border-color: #007bff;
+  background-color: #e7f3ff;
+}
+
+.gender-option input[type="radio"] {
+  margin: 0;
+}
+
+.gender-option label {
+  cursor: pointer;
+  font-size: 12px;
+  margin: 0;
+  flex: 1;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 15px;
+  }
+
+  .auth-card {
+    padding: 30px 25px;
+  }
+
+  .auth-title {
+    font-size: 24px;
+  }
+
+  .gender-options {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,148 @@
+/* PostCard Component Styles */
+.post-card {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.post-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Post Header */
+.post-header {
+  margin-bottom: 0.75rem;
+}
+
+.post-author {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.post-time {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Post Content */
+.post-content {
+  margin-bottom: 0.75rem;
+}
+
+.post-content p {
+  margin: 0;
+  line-height: 1.5;
+  color: #444;
+  font-size: 0.95rem;
+}
+
+/* Post Footer */
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.post-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.comments-count {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.updated-indicator {
+  font-size: 0.8rem;
+  color: #28a745;
+  font-style: italic;
+}
+
+.post-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.post-action-btn {
+  background: none;
+  border: 1px solid #007bff;
+  color: #007bff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.post-action-btn:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .post-card {
+    padding: 0.75rem;
+  }
+
+  .post-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .post-stats {
+    width: 100%;
+  }
+
+  .post-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.rich-text-indicator {
+  color: #7c3aed;
+  font-size: 0.8em;
+  margin-right: 4px;
+  opacity: 0.8;
+}

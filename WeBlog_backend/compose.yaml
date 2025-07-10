@@ -1,0 +1,70 @@
+# Docker Compose configuration for WeBlog application
+services:
+  # Main Spring Boot application
+  weblog-app:
+    build: . # Build from current directory using Dockerfile
+    ports:
+      - "8080:8080" # Map host port 8080 to container port 8080
+      - "35729:35729" # LiveReload port for hot reload
+    depends_on:
+      - postgres # Wait for postgres service to start
+      - redis # Wait for redis service to start
+    volumes:
+      # Mount entire project for hot reload
+      - ./:/app
+      # Mount Gradle cache for faster builds
+      - gradle-cache:/root/.gradle
+    environment:
+      # DevTools environment variables for better file watching
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+      - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
+      - SPRING_DEVTOOLS_RESTART_POLL_INTERVAL=1000
+      - SPRING_DEVTOOLS_RESTART_QUIET_PERIOD=400
+      # Enable polling mode for Docker environment
+      - JAVA_OPTS=-Dspring.devtools.restart.poll-interval=1000 -Dspring.devtools.restart.quiet-period=400
+    command: ["./gradlew", "bootRun", "--continuous", "--no-daemon", "--info"]
+    restart: unless-stopped # Restart policy
+
+  # PostgreSQL database
+  postgres:
+    image: "postgres:15-alpine" # Use PostgreSQL 15 Alpine image
+    environment:
+      - "POSTGRES_DB=weblog" # Database name
+      - "POSTGRES_PASSWORD=password" # Database password
+      - "POSTGRES_USER=weblog" # Database username
+    ports:
+      - "5432:5432" # Map host port 5432 to container port 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persist database data
+    restart: unless-stopped
+
+  # Redis cache server
+  redis:
+    image: "redis:7-alpine" # Use Redis 7 Alpine image
+    ports:
+      - "6380:6379" # Map host port 6380 to container port 6379
+    volumes:
+      - redis_data:/data # Persist Redis data
+    restart: unless-stopped
+
+  # pgAdmin web interface for PostgreSQL
+  pgadmin:
+    image: "dpage/pgadmin4:latest" # Use latest pgAdmin4 image
+    environment:
+      - "PGADMIN_DEFAULT_EMAIL=admin@weblog.com" # Default login email
+      - "PGADMIN_DEFAULT_PASSWORD=admin123" # Default login password
+      - "PGADMIN_CONFIG_SERVER_MODE=False" # Disable server mode
+    ports:
+      - "5050:80" # Map host port 5050 to container port 80
+    depends_on:
+      - postgres # Wait for postgres service to start
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin # Persist pgAdmin data
+    restart: unless-stopped
+
+# Named volumes for data persistence
+volumes:
+  postgres_data: # PostgreSQL data volume
+  redis_data: # Redis data volume
+  pgadmin_data: # pgAdmin data volume
+  gradle-cache: # Gradle cache volume
