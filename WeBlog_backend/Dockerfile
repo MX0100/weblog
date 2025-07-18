@@ -1,16 +1,10 @@
-# Use official OpenJDK 17 base image
-FROM openjdk:17-jdk-slim
+# Multi-stage build for smaller production image
+# Stage 1: Build the application
+FROM eclipse-temurin:17-jdk-alpine AS builder
 
-# Install necessary tools
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /app
 
-# Copy Gradle files
+# Copy Gradle files for dependency caching
 COPY gradle/ gradle/
 COPY gradlew .
 COPY gradlew.bat .
@@ -20,24 +14,41 @@ COPY settings.gradle .
 # Set executable permissions
 RUN chmod +x ./gradlew
 
-# Pre-download dependencies (optional, speeds up subsequent builds)
-RUN ./gradlew dependencies --no-daemon || true
+# Copy source code
+COPY src/ src/
 
-# Copy source code in production environment
-#COPY src/ src/
+# Build the application (creates a fat JAR)
+RUN ./gradlew bootJar --no-daemon
 
-# Set DevTools environment variables for hot reload
-ENV SPRING_DEVTOOLS_RESTART_ENABLED=true
-ENV SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
-ENV SPRING_DEVTOOLS_RESTART_POLL_INTERVAL=1000
-ENV SPRING_DEVTOOLS_RESTART_QUIET_PERIOD=400
+# Stage 2: Create the runtime image
+FROM eclipse-temurin:17-jre-alpine AS runtime
 
-# Set JVM options for better DevTools performance in Docker
-ENV JAVA_OPTS="-Dspring.devtools.restart.poll-interval=1000 -Dspring.devtools.restart.quiet-period=400"
+# Install only essential tools (Alpine uses apk)
+RUN apk add --no-cache curl
 
-# Expose ports
+# Create non-root user for security (Alpine syntax)
+RUN addgroup -S spring && adduser -S spring -G spring
+
+WORKDIR /app
+
+# Copy the built JAR from builder stage
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Change ownership to spring user
+RUN chown spring:spring app.jar
+
+# Switch to non-root user
+USER spring
+
+# Expose port
 EXPOSE 8080
-EXPOSE 35729
 
-# Use bootRun to start application with hot reload support
-CMD ["./gradlew", "bootRun", "--no-daemon"]
+# Set JVM options for production
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseContainerSupport"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# Run the application
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

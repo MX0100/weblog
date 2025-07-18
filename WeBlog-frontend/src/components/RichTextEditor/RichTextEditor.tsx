@@ -66,15 +66,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       };
 
       try {
-        console.log(
-          `Original image size: ${(file.size / 1024 / 1024).toFixed(2)} MB`
-        );
         const compressedFile = await imageCompression(file, options);
-        console.log(
-          `Compressed image size: ${(compressedFile.size / 1024 / 1024).toFixed(
-            2
-          )} MB`
-        );
 
         let imageUrl: string;
 
@@ -105,7 +97,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           }, 0);
         }
       } catch (error) {
-        console.error("Image processing failed:", error);
         alert("Image processing failed, please try again.");
       }
     };

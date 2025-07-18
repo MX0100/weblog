@@ -163,18 +163,14 @@ const Home: React.FC = () => {
 
   // Load initial pending requests (one-time only, then WebSocket takes over)
   const loadInitialPendingRequests = useCallback(async (reason: string) => {
-    console.log(`📥 Loading initial pending requests: ${reason}`);
     try {
       const response = await relationshipAPI.getPendingRequests();
       if (response.code === 200) {
         const pendingCount = response.data.length;
         setPendingRequestCount(pendingCount);
-        console.log(
-          `📊 Initial pending requests loaded: ${pendingCount} requests`
-        );
       }
     } catch (error) {
-      console.warn("Failed to load initial pending requests:", error);
+      // Silently handle error
     }
   }, []);
 
@@ -196,12 +192,8 @@ const Home: React.FC = () => {
 
           if (eventType === "CONNECTION_OPEN") {
             setWsConnected(true);
-            console.log(
-              "🟢 WebSocket connected - pure real-time notifications ready!"
-            );
           } else {
             setWsConnected(false);
-            console.log("🔴 WebSocket disconnected - will auto-reconnect");
           }
         });
 
@@ -213,9 +205,6 @@ const Home: React.FC = () => {
           setPendingRequestCount((prev) => prev + 1);
 
           // Pure WebSocket system - no API polling ever needed!
-          console.log(
-            "🚀 Received PAIR_REQUEST via WebSocket - pure real-time system!"
-          );
         });
 
         // Other notification types - add to message center
@@ -232,10 +221,6 @@ const Home: React.FC = () => {
 
             // Update user's relationship status - they are now paired
             if (currentUserRef.current) {
-              console.log(
-                "✅ Pair request accepted - updating relationship status"
-              );
-
               const metadata = extractMetadata(notification);
 
               // If current user was the one who sent the request that got accepted
@@ -267,7 +252,6 @@ const Home: React.FC = () => {
               ...prev.slice(0, 9),
             ]); // Keep only last 10
 
-            console.log("❌ Pair request rejected");
             // Similar to accepted - update pending count if needed
             if (currentUserRef.current) {
               const metadata = extractMetadata(notification);
@@ -309,8 +293,6 @@ const Home: React.FC = () => {
 
             // Update user's relationship status - they are now single
             if (currentUserRef.current) {
-              console.log("💔 Relationship ended - updating status to single");
-
               const updatedUser = {
                 ...currentUserRef.current,
                 relationshipStatus: "SINGLE" as const,
@@ -322,8 +304,6 @@ const Home: React.FC = () => {
 
               // Save updated user to localStorage
               saveUser(updatedUser);
-
-              console.log("💔 User status updated to SINGLE");
             }
           }
         );
@@ -343,7 +323,7 @@ const Home: React.FC = () => {
       try {
         post.richContent = JSON.parse(post.richContent);
       } catch (e) {
-        console.error("Failed to parse richContent", e);
+        // Fallback to error content on parse failure
         post.richContent = { ops: [{ insert: "Error loading content." }] };
       }
     }
@@ -366,11 +346,9 @@ const Home: React.FC = () => {
           setPage(pageResponse.page + 1); // Corrected: use page directly
           setHasMore(!pageResponse.last);
         } else {
-          console.error("Failed to fetch posts:", response.message);
           setHasMore(false);
         }
       } catch (error) {
-        console.error("Error fetching posts:", error);
         setHasMore(false); // Stop trying on error
       } finally {
         setLoading(false);
@@ -405,8 +383,6 @@ const Home: React.FC = () => {
 
   // Manual refresh - only reconnect WebSocket, no API polling needed
   const handleManualRefresh = useCallback(() => {
-    console.log("🔄 Manual refresh triggered - reconnecting WebSocket...");
-
     // Always try to reconnect WebSocket
     const token = localStorage.getItem("token");
     if (token) {

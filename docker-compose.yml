@@ -1,6 +1,26 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: weblog-postgres
+    environment:
+      - POSTGRES_DB=weblog
+      - POSTGRES_USER=weblog
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - weblog-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weblog -d weblog"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   backend:
     build:
       context: ./WeBlog_backend
@@ -8,13 +28,16 @@ services:
     container_name: weblog-backend
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:h2:mem:weblog
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
-      - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/weblog
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=weblog
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
     ports:
       - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - weblog-network
     restart: unless-stopped
@@ -32,6 +55,9 @@ services:
       - weblog-network
     restart: unless-stopped
 
+volumes:
+  postgres_data:
+
 networks:
   weblog-network:
-    driver: bridge 
+    driver: bridge

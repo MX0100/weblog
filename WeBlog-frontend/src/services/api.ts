@@ -81,6 +81,10 @@ export const userAPI = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+  searchUser: (username: string) =>
+    apiClient.request<User>(
+      `/api/users/search?username=${encodeURIComponent(username)}`
+    ),
 };
 
 export const relationshipAPI = {

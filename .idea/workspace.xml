@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6a96e2ac-be5b-4ded-93de-de9cddd86c74" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/.gitattributes" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/build.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/compose.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/gradlew" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/gradlew.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/settings.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/src/main/java/io/github/mx0100/weblog/WeBlogApplication.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/src/main/resources/application.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/WeBlog_backend/src/test/java/io/github/mx0100/weblog/WeBlogApplicationTests.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/WeBlog_backend" />
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="2" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="2zWeyXkRbxGEkeuxbO6Q5zpiyfC" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/WenKai/Desktop/Stack/WeBlog/WeBlog_backend",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
+        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6a96e2ac-be5b-4ded-93de-de9cddd86c74" name="Changes" comment="" />
+      <created>1751851511397</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1751851511397</updated>
+      <workItem from="1751851513316" duration="91000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

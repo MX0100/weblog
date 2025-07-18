@@ -1,0 +1,112 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-west-2
+  ENVIRONMENT: dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Select Terraform Workspace
+        working-directory: terraform
+        run: |
+          terraform workspace select ${{ env.ENVIRONMENT }} || terraform workspace new ${{ env.ENVIRONMENT }}
+
+      - name: Terraform Plan
+        working-directory: terraform
+        run: terraform plan -var-file="environments/${{ env.ENVIRONMENT }}.tfvars"
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -var-file="environments/${{ env.ENVIRONMENT }}.tfvars" -auto-approve
+
+      - name: Get ECR Repository URLs
+        working-directory: terraform
+        id: ecr-urls
+        run: |
+          echo "frontend_repo=$(terraform output -raw ecr_frontend_repository_url)" >> $GITHUB_OUTPUT
+          echo "backend_repo=$(terraform output -raw ecr_backend_repository_url)" >> $GITHUB_OUTPUT
+
+      - name: Build and push frontend image
+        working-directory: WeBlog-frontend
+        run: |
+          docker build -t weblog-frontend-${{ env.ENVIRONMENT }} .
+          docker tag weblog-frontend-${{ env.ENVIRONMENT }}:latest ${{ steps.ecr-urls.outputs.frontend_repo }}:${{ env.ENVIRONMENT }}
+          docker tag weblog-frontend-${{ env.ENVIRONMENT }}:latest ${{ steps.ecr-urls.outputs.frontend_repo }}:latest
+          docker push ${{ steps.ecr-urls.outputs.frontend_repo }}:${{ env.ENVIRONMENT }}
+          docker push ${{ steps.ecr-urls.outputs.frontend_repo }}:latest
+
+      - name: Build and push backend image
+        working-directory: WeBlog_backend
+        run: |
+          docker build -f Dockerfile.prod -t weblog-backend-${{ env.ENVIRONMENT }} .
+          docker tag weblog-backend-${{ env.ENVIRONMENT }}:latest ${{ steps.ecr-urls.outputs.backend_repo }}:${{ env.ENVIRONMENT }}
+          docker tag weblog-backend-${{ env.ENVIRONMENT }}:latest ${{ steps.ecr-urls.outputs.backend_repo }}:latest
+          docker push ${{ steps.ecr-urls.outputs.backend_repo }}:${{ env.ENVIRONMENT }}
+          docker push ${{ steps.ecr-urls.outputs.backend_repo }}:latest
+
+      - name: Update ECS services
+        run: |
+          aws ecs update-service --cluster weblog-cluster --service weblog-frontend-service --force-new-deployment --region ${{ env.AWS_REGION }}
+          aws ecs update-service --cluster weblog-cluster --service weblog-backend-service --force-new-deployment --region ${{ env.AWS_REGION }}
+
+      - name: Get deployment URLs
+        working-directory: terraform
+        id: urls
+        run: |
+          echo "load_balancer_url=$(terraform output -raw load_balancer_url)" >> $GITHUB_OUTPUT
+          echo "cloudfront_url=$(terraform output -raw cloudfront_url)" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with deployment info
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 **开发环境部署成功！**
+              
+              📍 **访问地址:**
+              - Load Balancer: ${{ steps.urls.outputs.load_balancer_url }}
+              - CloudFront: ${{ steps.urls.outputs.cloudfront_url }}
+              
+              📊 **部署信息:**
+              - 环境: ${{ env.ENVIRONMENT }}
+              - 提交: ${{ github.sha }}
+              - 分支: ${{ github.ref_name }}
+              
+              ⏰ 服务可能需要几分钟才能完全启动`
+            })

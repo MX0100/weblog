@@ -33,7 +33,7 @@ export const getUser = (): User | null => {
     try {
       return JSON.parse(userStr);
     } catch (error) {
-      console.error("Failed to parse user data:", error);
+      // Silently handle parse errors
       return null;
     }
   }

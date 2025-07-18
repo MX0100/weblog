@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { User } from "../../../types/api";
+import { userAPI, relationshipAPI } from "../../../services/api";
 import UserAvatar from "../UserAvatar/UserAvatar";
 import NotificationButton from "../NotificationButton/NotificationButton";
 import "./Navbar.css";
@@ -25,41 +26,105 @@ const Navbar: React.FC<NavbarProps> = ({
   onManualRefresh,
   onProfileClick,
 }) => {
-  // Add debug state
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [showDebug, setShowDebug] = useState(false);
+  // User search state
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState<User | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Check WebSocket debug info
-  const checkWebSocketDebug = async () => {
+  // Pair request state
+  const [sendingRequest, setSendingRequest] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [requestResult, setRequestResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
+  // Handle search user
+  const handleSearchUser = async () => {
+    if (!searchQuery.trim()) {
+      setSearchError("Please enter username");
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchError(null);
+    setSearchResult(null);
+
     try {
-      const response = await fetch("/api/users/debug/online", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
+      const response = await userAPI.searchUser(searchQuery.trim());
+      if (response.code === 200) {
+        setSearchResult(response.data);
+      } else {
+        setSearchError(response.message || "Search failed");
+      }
+    } catch (error: any) {
+      setSearchError(error.response?.data?.message || "User not found");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Handle send pair request
+  const handleSendPairRequest = async () => {
+    if (!searchResult) return;
+
+    // Check if target user is already coupled
+    if (searchResult.relationshipStatus !== "SINGLE") {
+      setRequestResult({
+        success: false,
+        message: "Target user is already in a relationship",
+      });
+      setShowResultModal(true);
+      return;
+    }
+
+    // Check if current user is already coupled
+    if (user.relationshipStatus !== "SINGLE") {
+      setRequestResult({
+        success: false,
+        message: "You are already in a relationship",
+      });
+      setShowResultModal(true);
+      return;
+    }
+
+    setSendingRequest(true);
+
+    try {
+      const response = await relationshipAPI.sendPairRequest({
+        partnerUsername: searchResult.username,
       });
 
-      if (response.ok) {
-        const result = await response.json();
-
-        // Add some additional debug info from local state
-        const enhancedDebugInfo = {
-          ...result.data,
-          frontendWebSocketUrl: localStorage.getItem("token")
-            ? `ws://localhost:8080/ws/notifications?token=${localStorage
-                .getItem("token")
-                ?.substring(0, 20)}...`
-            : "No token available",
-          lastWebSocketActivity: "Check browser console for WebSocket logs",
-          optimizedForRealTime: "🚀 Pure WebSocket system - No API polling!",
-        };
-
-        setDebugInfo(enhancedDebugInfo);
-        setShowDebug(true);
+      if (response.code === 200) {
+        setRequestResult({
+          success: true,
+          message: "Request sent successfully",
+        });
+      } else {
+        setRequestResult({
+          success: false,
+          message: response.message || "Failed to send request",
+        });
       }
-    } catch (error) {
-      console.error("Failed to get debug info:", error);
+    } catch (error: any) {
+      setRequestResult({
+        success: false,
+        message: error.response?.data?.message || "Failed to send request",
+      });
+    } finally {
+      setSendingRequest(false);
+      setShowResultModal(true);
     }
+  };
+
+  // Open search modal
+  const openSearchModal = () => {
+    setShowSearchModal(true);
+    setSearchQuery("");
+    setSearchResult(null);
+    setSearchError(null);
   };
 
   return (
@@ -101,11 +166,11 @@ const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
 
-            {/* Debug button */}
+            {/* Search user button */}
             <button
-              className="debug-btn"
-              onClick={checkWebSocketDebug}
-              title="Check WebSocket Debug Info"
+              className="search-btn"
+              onClick={openSearchModal}
+              title="Search Users"
             >
               🔍
             </button>
@@ -122,42 +187,126 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Debug info modal */}
-      {showDebug && debugInfo && (
+      {/* Search user modal */}
+      {showSearchModal && (
         <div
-          className="debug-modal-overlay"
-          onClick={() => setShowDebug(false)}
+          className="search-modal-overlay"
+          onClick={() => setShowSearchModal(false)}
         >
-          <div className="debug-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>WebSocket Debug Info</h3>
-            <div className="debug-content">
-              <p>
-                <strong>Current User ID:</strong> {debugInfo.currentUserId}
-              </p>
-              <p>
-                <strong>Current User Online:</strong>{" "}
-                {debugInfo.currentUserOnline ? "Yes" : "No"}
-              </p>
-              <p>
-                <strong>Total Online Users:</strong>{" "}
-                {debugInfo.totalOnlineUsers}
-              </p>
-              <p>
-                <strong>Frontend Connection:</strong>{" "}
-                {wsConnected ? "Connected" : "Disconnected"}
-              </p>
-              <p>
-                <strong>System Status:</strong> {debugInfo.optimizedForRealTime}
-              </p>
-              <p>
-                <strong>Connection URL:</strong>{" "}
-                {debugInfo.frontendWebSocketUrl}
-              </p>
-              <p>
-                <strong>Debug Tip:</strong> {debugInfo.lastWebSocketActivity}
-              </p>
+          <div className="search-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Search User</h3>
+            <div className="search-content">
+              <div className="search-input-group">
+                <input
+                  type="text"
+                  placeholder="Enter username"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchUser()}
+                  disabled={searchLoading}
+                />
+                <button
+                  onClick={handleSearchUser}
+                  disabled={searchLoading || !searchQuery.trim()}
+                  className="search-submit-btn"
+                >
+                  {searchLoading ? "Searching..." : "Search"}
+                </button>
+              </div>
+
+              {searchError && (
+                <div className="search-error">
+                  <p>{searchError}</p>
+                </div>
+              )}
+
+              {searchResult && (
+                <div className="search-result">
+                  <div className="user-info">
+                    <div className="user-avatar">
+                      {searchResult.profileimg ? (
+                        <img
+                          src={searchResult.profileimg}
+                          alt={searchResult.nickname}
+                        />
+                      ) : (
+                        <span>
+                          {searchResult.nickname.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="user-details">
+                      <h4>{searchResult.nickname}</h4>
+                      <p>@{searchResult.username}</p>
+                      <p>Gender: {searchResult.gender}</p>
+                      <p>
+                        Relationship Status:{" "}
+                        {searchResult.relationshipStatus === "SINGLE"
+                          ? "Single"
+                          : "In a relationship"}
+                        {searchResult.username === user.username &&
+                          " (This is you)"}
+                      </p>
+                      {searchResult.hobby && searchResult.hobby.length > 0 && (
+                        <p>Hobbies: {searchResult.hobby.join(", ")}</p>
+                      )}
+
+                      {/* Send pair request button - only show if not searching self */}
+                      {searchResult.username !== user.username && (
+                        <div className="search-actions">
+                          <button
+                            className="send-request-btn"
+                            onClick={handleSendPairRequest}
+                            disabled={sendingRequest}
+                          >
+                            {sendingRequest ? "Sending..." : "Send Request"}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Self search message */}
+                      {searchResult.username === user.username && (
+                        <div className="self-search-message">
+                          <p>👤 This is your profile</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <button onClick={() => setShowDebug(false)}>Close</button>
+            <button
+              className="search-close-btn"
+              onClick={() => setShowSearchModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Result notification modal */}
+      {showResultModal && requestResult && (
+        <div
+          className="result-modal-overlay"
+          onClick={() => setShowResultModal(false)}
+        >
+          <div className="result-modal" onClick={(e) => e.stopPropagation()}>
+            <div
+              className={`result-icon ${
+                requestResult.success ? "success" : "error"
+              }`}
+            >
+              {requestResult.success ? "✓" : "✗"}
+            </div>
+            <h3>{requestResult.success ? "Request Sent" : "Request Failed"}</h3>
+            <p>{requestResult.message}</p>
+            <button
+              className="result-close-btn"
+              onClick={() => setShowResultModal(false)}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

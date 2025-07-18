@@ -15,10 +15,6 @@ export class NotificationManager {
 
   constructor(token: string) {
     this.token = token;
-    console.log(
-      "🔍 NotificationManager created with token:",
-      token ? "TOKEN_PRESENT" : "TOKEN_MISSING"
-    );
   }
 
   // Connect to WebSocket
@@ -28,64 +24,43 @@ export class NotificationManager {
       this.isConnecting ||
       this.ws?.readyState === WebSocket.OPEN
     ) {
-      console.log("🔍 Connect skipped:", {
-        isDestroyed: this.isDestroyed,
-        isConnecting: this.isConnecting,
-        currentState: this.ws?.readyState,
-      });
       return;
     }
 
     this.isConnecting = true;
-    console.log("🔍 Starting WebSocket connection...");
 
     const wsUrl = this.getWebSocketUrl();
-    console.log("🔍 WebSocket URL:", wsUrl);
 
     if (!this.token) {
-      console.error("❌ No token available for WebSocket connection");
       this.isConnecting = false;
       this.notifyListeners("connection", { type: "CONNECTION_ERROR" } as any);
       return;
     }
 
     try {
-      console.log("🔍 Creating WebSocket instance...");
       this.ws = new WebSocket(wsUrl);
     } catch (error) {
-      console.error("❌ Failed to create WebSocket:", error);
       this.isConnecting = false;
       this.notifyListeners("connection", { type: "CONNECTION_ERROR" } as any);
       return;
     }
 
     this.ws.onopen = (event) => {
-      console.log("✅ WebSocket connection opened:", event);
       this.isConnecting = false;
       this.reconnectAttempts = 0;
       this.notifyListeners("connection", { type: "CONNECTION_OPEN" } as any);
     };
 
     this.ws.onmessage = (event) => {
-      console.log("📨 WebSocket message received:", event.data);
       try {
         const notification: WebSocketNotification = JSON.parse(event.data);
         this.handleNotification(notification);
       } catch (error) {
-        console.error(
-          "❌ Failed to parse WebSocket message:",
-          error,
-          event.data
-        );
+        // Silently handle parse errors
       }
     };
 
     this.ws.onclose = (event) => {
-      console.log("🔌 WebSocket connection closed:", {
-        code: event.code,
-        reason: event.reason,
-        wasClean: event.wasClean,
-      });
       this.isConnecting = false;
       this.ws = null;
       this.notifyListeners("connection", { type: "CONNECTION_CLOSED" } as any);
@@ -96,7 +71,6 @@ export class NotificationManager {
     };
 
     this.ws.onerror = (error) => {
-      console.error("❌ WebSocket error:", error);
       this.isConnecting = false;
       this.notifyListeners("connection", { type: "CONNECTION_ERROR" } as any);
     };
@@ -104,7 +78,6 @@ export class NotificationManager {
     // Connection timeout check
     setTimeout(() => {
       if (this.ws?.readyState === WebSocket.CONNECTING) {
-        console.warn("⏰ WebSocket connection timeout, closing...");
         this.ws.close();
       }
     }, 10000);
@@ -126,15 +99,6 @@ export class NotificationManager {
     }
 
     const wsUrl = `${protocol}//${host}/ws/notifications?token=${this.token}`;
-
-    console.log("🔍 WebSocket URL details:", {
-      protocol,
-      host,
-      originalHost: window.location.host,
-      hostname: window.location.hostname,
-      fullUrl: wsUrl,
-      tokenLength: this.token ? this.token.length : 0,
-    });
 
     return wsUrl;
   }

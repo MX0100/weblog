@@ -8,6 +8,7 @@ import io.github.mx0100.weblog.dto.response.UserResponse;
 import io.github.mx0100.weblog.entity.User;
 import io.github.mx0100.weblog.security.UserPrincipal;
 import io.github.mx0100.weblog.service.UserService;
+import io.github.mx0100.weblog.service.UserRelationshipService;
 import io.github.mx0100.weblog.service.NotificationWebSocketHandler;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import java.util.Map;
 public class UserController {
     
     private final UserService userService;
+    private final UserRelationshipService userRelationshipService;
     private final NotificationWebSocketHandler webSocketHandler;
     
     /**
@@ -89,14 +91,14 @@ public class UserController {
      * Search user by username
      * 
      * @param username username to search
-     * @return user information
+     * @return user information with relationship status
      */
     @GetMapping("/search")
     public ApiResponse<UserResponse> searchUserByUsername(@RequestParam String username) {
         log.info("Search user by username: {}", username);
         
         User user = userService.findByUsername(username);
-        UserResponse userResponse = BeanUtils.toUserResponse(user);
+        UserResponse userResponse = BeanUtils.toUserResponse(user, userRelationshipService.getRelationshipStatus(user.getUserId()));
         
         return ApiResponse.success(userResponse);
     }

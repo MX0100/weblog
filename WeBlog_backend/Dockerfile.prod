@@ -22,6 +22,9 @@ RUN ./gradlew build -x test --no-daemon
 # Production stage
 FROM openjdk:17-jre-slim
 
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy the built jar file
@@ -29,14 +32,18 @@ COPY --from=build /app/build/libs/*.jar app.jar
 
 # Create non-root user
 RUN groupadd -r weblog && useradd -r -g weblog weblog
+RUN chown weblog:weblog app.jar
 USER weblog
 
 # Expose port
 EXPOSE 8080
 
+# Set JVM options for production
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseContainerSupport"
+
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"] 
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"] 

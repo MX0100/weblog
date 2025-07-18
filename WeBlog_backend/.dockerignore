@@ -1,0 +1,19 @@
+# 忽略构建输出
+build/
+target/
+.gradle/
+
+# 忽略 IDE 文件
+.idea/
+.vscode/
+*.iml
+
+# 忽略 Git 文件
+.git/
+.gitignore
+
+# 忽略其他文件
+README.md
+*.md
+.env
+*.log 
