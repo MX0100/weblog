@@ -41,6 +41,8 @@ data "aws_ami" "amazon_linux" {
 resource "random_password" "db_password" {
   length  = 16
   special = true
+  # 排除RDS不允许的字符: '/', '@', '"', ' ' (空格)
+  override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
 # VPC

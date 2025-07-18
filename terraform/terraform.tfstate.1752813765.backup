@@ -1,7 +1,7 @@
 {
   "version": 4,
   "terraform_version": "1.12.2",
-  "serial": 218,
+  "serial": 210,
   "lineage": "7a5dade2-2336-90ba-3ade-3f97561f3b4a",
   "outputs": {
     "cloudfront_distribution_id": {
@@ -21,7 +21,7 @@
       "type": "string"
     },
     "database_password": {
-      "value": "7VLx?o7b]xC\u00267e%{",
+      "value": "ru@?[bN9QPwz:5pf",
       "type": "string",
       "sensitive": true
     },
@@ -36,14 +36,6 @@
     "frontend_url": {
       "value": "https://dcyz06osekbqs.cloudfront.net",
       "type": "string"
-    },
-    "rds_endpoint": {
-      "value": "weblog-prod-db.c12m62s4kp9h.us-west-2.rds.amazonaws.com:5432",
-      "type": "string"
-    },
-    "rds_port": {
-      "value": 5432,
-      "type": "number"
     },
     "rds_security_group_id": {
       "value": "sg-01616f8a3696b40ba",
@@ -208,20 +200,20 @@
         {
           "schema_version": 1,
           "attributes": {
-            "aliases": [],
+            "aliases": null,
             "arn": "arn:aws:cloudfront::280329926527:distribution/E3DROAWGK75X5I",
             "caller_reference": "terraform-20250718041420189300000002",
             "comment": null,
             "continuous_deployment_policy_id": "",
             "custom_error_response": [
               {
-                "error_caching_min_ttl": 0,
+                "error_caching_min_ttl": null,
                 "error_code": 403,
                 "response_code": 200,
                 "response_page_path": "/index.html"
               },
               {
-                "error_caching_min_ttl": 0,
+                "error_caching_min_ttl": null,
                 "error_code": 404,
                 "response_code": 200,
                 "response_page_path": "/index.html"
@@ -428,141 +420,6 @@
     },
     {
       "mode": "managed",
-      "type": "aws_db_instance",
-      "name": "main",
-      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
-      "instances": [
-        {
-          "schema_version": 2,
-          "attributes": {
-            "address": "weblog-prod-db.c12m62s4kp9h.us-west-2.rds.amazonaws.com",
-            "allocated_storage": 20,
-            "allow_major_version_upgrade": null,
-            "apply_immediately": false,
-            "arn": "arn:aws:rds:us-west-2:280329926527:db:weblog-prod-db",
-            "auto_minor_version_upgrade": true,
-            "availability_zone": "us-west-2b",
-            "backup_retention_period": 7,
-            "backup_target": "region",
-            "backup_window": "03:00-04:00",
-            "blue_green_update": [],
-            "ca_cert_identifier": "rds-ca-rsa2048-g1",
-            "character_set_name": "",
-            "copy_tags_to_snapshot": false,
-            "custom_iam_instance_profile": "",
-            "customer_owned_ip_enabled": false,
-            "database_insights_mode": "standard",
-            "db_name": "weblog_prod",
-            "db_subnet_group_name": "weblog-prod-db-subnet-group",
-            "dedicated_log_volume": false,
-            "delete_automated_backups": true,
-            "deletion_protection": false,
-            "domain": "",
-            "domain_auth_secret_arn": "",
-            "domain_dns_ips": null,
-            "domain_fqdn": "",
-            "domain_iam_role_name": "",
-            "domain_ou": "",
-            "enabled_cloudwatch_logs_exports": null,
-            "endpoint": "weblog-prod-db.c12m62s4kp9h.us-west-2.rds.amazonaws.com:5432",
-            "engine": "postgres",
-            "engine_lifecycle_support": "open-source-rds-extended-support",
-            "engine_version": "15.8",
-            "engine_version_actual": "15.8",
-            "final_snapshot_identifier": null,
-            "hosted_zone_id": "Z1PVIF0B656C1W",
-            "iam_database_authentication_enabled": false,
-            "id": "db-HOJ4NT5MEZG2IA3K56EOICBXNE",
-            "identifier": "weblog-prod-db",
-            "identifier_prefix": "",
-            "instance_class": "db.t3.medium",
-            "iops": 0,
-            "kms_key_id": "",
-            "latest_restorable_time": "2025-07-18T04:49:15Z",
-            "license_model": "postgresql-license",
-            "listener_endpoint": [],
-            "maintenance_window": "sun:04:00-sun:05:00",
-            "manage_master_user_password": null,
-            "master_user_secret": [],
-            "master_user_secret_kms_key_id": null,
-            "max_allocated_storage": 0,
-            "monitoring_interval": 0,
-            "monitoring_role_arn": "",
-            "multi_az": false,
-            "nchar_character_set_name": "",
-            "network_type": "IPV4",
-            "option_group_name": "default:postgres-15",
-            "parameter_group_name": "default.postgres15",
-            "password": "7VLx?o7b]xC\u00267e%{",
-            "password_wo": null,
-            "password_wo_version": null,
-            "performance_insights_enabled": false,
-            "performance_insights_kms_key_id": "",
-            "performance_insights_retention_period": 0,
-            "port": 5432,
-            "publicly_accessible": false,
-            "replica_mode": "",
-            "replicas": [],
-            "replicate_source_db": "",
-            "resource_id": "db-HOJ4NT5MEZG2IA3K56EOICBXNE",
-            "restore_to_point_in_time": [],
-            "s3_import": [],
-            "skip_final_snapshot": true,
-            "snapshot_identifier": null,
-            "status": "available",
-            "storage_encrypted": false,
-            "storage_throughput": 0,
-            "storage_type": "gp2",
-            "tags": {
-              "Environment": "prod",
-              "ManagedBy": "terraform",
-              "Name": "weblog-prod-database",
-              "Project": "weblog"
-            },
-            "tags_all": {
-              "Environment": "prod",
-              "ManagedBy": "terraform",
-              "Name": "weblog-prod-database",
-              "Project": "weblog"
-            },
-            "timeouts": null,
-            "timezone": "",
-            "upgrade_storage_config": null,
-            "username": "weblog_admin",
-            "vpc_security_group_ids": [
-              "sg-01616f8a3696b40ba"
-            ]
-          },
-          "sensitive_attributes": [
-            [
-              {
-                "type": "get_attr",
-                "value": "password"
-              }
-            ],
-            [
-              {
-                "type": "get_attr",
-                "value": "password_wo"
-              }
-            ]
-          ],
-          "identity_schema_version": 0,
-          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInVwZGF0ZSI6NDgwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMiJ9",
-          "dependencies": [
-            "aws_db_subnet_group.main",
-            "aws_security_group.rds",
-            "aws_security_group.web_server",
-            "aws_subnet.private",
-            "aws_vpc.main",
-            "data.aws_availability_zones.available",
-            "random_password.db_password"
-          ]
-        }
-      ]
-    },
-    {
-      "mode": "managed",
       "type": "aws_db_subnet_group",
       "name": "main",
       "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
@@ -604,6 +461,121 @@
             "aws_vpc.main",
             "data.aws_availability_zones.available"
           ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "backend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-west-2:280329926527:repository/weblog-backend",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "weblog-backend",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": false
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "weblog-backend",
+            "registry_id": "280329926527",
+            "repository_url": "280329926527.dkr.ecr.us-west-2.amazonaws.com/weblog-backend",
+            "tags": {
+              "Name": "weblog-backend"
+            },
+            "tags_all": {
+              "Name": "weblog-backend"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "frontend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-west-2:280329926527:repository/weblog-frontend",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "weblog-frontend",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": false
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "weblog-frontend",
+            "registry_id": "280329926527",
+            "repository_url": "280329926527.dkr.ecr.us-west-2.amazonaws.com/weblog-frontend",
+            "tags": {
+              "Name": "weblog-frontend"
+            },
+            "tags_all": {
+              "Name": "weblog-frontend"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_cluster",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecs:us-west-2:280329926527:cluster/weblog-cluster",
+            "configuration": [],
+            "id": "arn:aws:ecs:us-west-2:280329926527:cluster/weblog-cluster",
+            "name": "weblog-cluster",
+            "service_connect_defaults": [],
+            "setting": [
+              {
+                "name": "containerInsights",
+                "value": "disabled"
+              }
+            ],
+            "tags": {
+              "Name": "weblog-cluster"
+            },
+            "tags_all": {
+              "Name": "weblog-cluster"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
         }
       ]
     },
@@ -660,9 +632,7 @@
             "force_detach_policies": false,
             "id": "weblog-prod-ec2-role",
             "inline_policy": [],
-            "managed_policy_arns": [
-              "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
-            ],
+            "managed_policy_arns": [],
             "max_session_duration": 3600,
             "name": "weblog-prod-ec2-role",
             "name_prefix": "",
@@ -883,7 +853,7 @@
             "logging": [],
             "object_lock_configuration": [],
             "object_lock_enabled": false,
-            "policy": "{\"Statement\":[{\"Action\":\"s3:GetObject\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Resource\":\"arn:aws:s3:::weblog-prod-frontend-static/*\",\"Sid\":\"PublicReadGetObject\"}],\"Version\":\"2012-10-17\"}",
+            "policy": "",
             "region": "us-west-2",
             "replication_configuration": [],
             "request_payer": "BucketOwner",
@@ -921,16 +891,9 @@
                 "mfa_delete": false
               }
             ],
-            "website": [
-              {
-                "error_document": "index.html",
-                "index_document": "index.html",
-                "redirect_all_requests_to": "",
-                "routing_rules": ""
-              }
-            ],
-            "website_domain": "s3-website-us-west-2.amazonaws.com",
-            "website_endpoint": "weblog-prod-frontend-static.s3-website-us-west-2.amazonaws.com"
+            "website": [],
+            "website_domain": null,
+            "website_endpoint": null
           },
           "sensitive_attributes": [],
           "identity_schema_version": 0,
@@ -1455,7 +1418,7 @@
         {
           "schema_version": 3,
           "attributes": {
-            "bcrypt_hash": "$2a$10$7XF0ecPldVqeXrtbGSMqz.4BHXnePctsqZg4GeT0MwCBTchjih1d6",
+            "bcrypt_hash": "$2a$10$7L72LxMJU4myToLIMjCsN.DV97DIm.ak0f7cJkvIyY9.RSzx3o3lq",
             "id": "none",
             "keepers": null,
             "length": 16,
@@ -1466,8 +1429,8 @@
             "min_upper": 0,
             "number": true,
             "numeric": true,
-            "override_special": "!#$%\u0026*()-_=+[]{}\u003c\u003e:?",
-            "result": "7VLx?o7b]xC\u00267e%{",
+            "override_special": null,
+            "result": "ru@?[bN9QPwz:5pf",
             "special": true,
             "upper": true
           },
