@@ -1,0 +1,80 @@
+# ======================================
+# Development Dockerfile - Optimized for Hot Reload
+# ======================================
+# Multi-stage build for better caching and faster rebuilds
+
+# ======================================
+# Stage 1: Dependencies Cache Layer
+# ======================================
+FROM eclipse-temurin:17-jdk-alpine AS deps
+
+WORKDIR /app
+
+# Copy dependency files first (better Docker layer caching)
+COPY gradle/ gradle/
+COPY gradlew gradlew
+COPY gradlew.bat gradlew.bat
+COPY build.gradle settings.gradle ./
+
+# Make gradlew executable and download dependencies
+RUN chmod +x gradlew && \
+    ./gradlew dependencies --no-daemon --stacktrace
+
+# ======================================
+# Stage 2: Development Runtime
+# ======================================
+FROM eclipse-temurin:17-jdk-alpine AS development
+
+# Install development tools
+RUN apk add --no-cache \
+    curl \
+    inotify-tools \
+    bash
+
+# Create non-root user for security
+RUN addgroup -g 1001 weblog && \
+    adduser -D -u 1001 -G weblog weblog
+
+WORKDIR /app
+
+# Copy Gradle wrapper and dependencies from cache layer
+COPY --from=deps --chown=weblog:weblog /app/gradle gradle/
+COPY --from=deps --chown=weblog:weblog /app/gradlew* ./
+COPY --from=deps --chown=weblog:weblog /app/build.gradle ./
+COPY --from=deps --chown=weblog:weblog /app/settings.gradle ./
+COPY --from=deps --chown=weblog:weblog /root/.gradle /home/weblog/.gradle
+
+# Switch to non-root user
+USER weblog
+
+# ======================================
+# Development Environment Variables
+# ======================================
+ENV SPRING_PROFILES_ACTIVE=local
+ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
+
+# DevTools configuration
+ENV SPRING_DEVTOOLS_RESTART_ENABLED=true
+ENV SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
+ENV SPRING_DEVTOOLS_RESTART_POLL_INTERVAL=1000
+ENV SPRING_DEVTOOLS_RESTART_QUIET_PERIOD=400
+
+# ======================================
+# Expose Ports
+# ======================================
+EXPOSE 8080
+# LiveReload port for DevTools
+EXPOSE 35729
+
+# ======================================
+# Health Check
+# ======================================
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# ======================================
+# Development Command
+# ======================================
+# Use bootRun for hot reload support
+CMD ["./gradlew", "bootRun", "--continuous", "--no-daemon"] 

@@ -51,6 +51,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/posts/{postId}/comments").permitAll() // GET comments is public
                 .requestMatchers("/api/comments/batch").permitAll() // GET batch comments is public
                 
+                // Actuator endpoints - allow public access to health checks
+                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                
                 // WebSocket endpoints - allow for handshake (authentication handled by WebSocketAuthInterceptor)
                 .requestMatchers("/ws/**").permitAll()
                 

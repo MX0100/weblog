@@ -17,6 +17,78 @@ import type {
   CreateCommentRequest,
 } from "../types/api";
 
+// ======================================
+// Environment Configuration
+// ======================================
+const ENV_CONFIG = {
+  // API Configuration - 修复：通过CloudFront HTTPS终止访问EC2
+  API_BASE_URL:
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.DEV
+      ? "http://localhost:8080"
+      : "https://dcyz06osekbqs.cloudfront.net"), // 修改：通过CloudFront代理
+
+  // WebSocket Configuration - 修复：通过CloudFront WebSocket代理
+  WS_URL:
+    import.meta.env.VITE_WS_URL ||
+    (import.meta.env.DEV
+      ? "ws://localhost:8080/ws"
+      : "wss://dcyz06osekbqs.cloudfront.net/ws"), // 修改：通过CloudFront WSS
+
+  // Application Configuration
+  APP_TITLE: import.meta.env.VITE_APP_TITLE || "WeBlog",
+  APP_VERSION: import.meta.env.VITE_APP_VERSION || "1.0.0",
+  ENV_NAME:
+    import.meta.env.VITE_ENV_NAME ||
+    (import.meta.env.DEV ? "development" : "production"),
+
+  // Feature Flags
+  ENABLE_DEVTOOLS:
+    import.meta.env.VITE_ENABLE_DEVTOOLS === "true" || import.meta.env.DEV,
+  ENABLE_DEBUG:
+    import.meta.env.VITE_ENABLE_DEBUG === "true" || import.meta.env.DEV,
+  ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === "true",
+
+  // AWS Configuration
+  CLOUDFRONT_DOMAIN: import.meta.env.VITE_CLOUDFRONT_DOMAIN || "",
+  S3_BUCKET: import.meta.env.VITE_S3_BUCKET || "",
+  AWS_REGION: import.meta.env.VITE_AWS_REGION || "us-east-1",
+};
+
+const API_BASE_URL = ENV_CONFIG.API_BASE_URL;
+
+// ======================================
+// API路径配置
+// ======================================
+// 开发环境：直接访问 localhost:8080/api
+// 生产环境：直接访问 EC2:8080/api (不需要额外前缀)
+const getApiUrl = (path: string) => {
+  // 统一：直接使用API_BASE_URL + path，后端路径已包含/api
+  return `${API_BASE_URL}${path}`;
+};
+
+// 调试信息
+if (ENV_CONFIG.ENABLE_DEBUG) {
+  console.log("🔧 环境信息:", {
+    envName: ENV_CONFIG.ENV_NAME,
+    isDev: import.meta.env.DEV,
+    isProd: import.meta.env.PROD,
+    apiBaseUrl: ENV_CONFIG.API_BASE_URL,
+    wsUrl: ENV_CONFIG.WS_URL,
+    mode: import.meta.env.MODE,
+    features: {
+      devtools: ENV_CONFIG.ENABLE_DEVTOOLS,
+      debug: ENV_CONFIG.ENABLE_DEBUG,
+      analytics: ENV_CONFIG.ENABLE_ANALYTICS,
+    },
+    aws: {
+      cloudfront: ENV_CONFIG.CLOUDFRONT_DOMAIN,
+      s3Bucket: ENV_CONFIG.S3_BUCKET,
+      region: ENV_CONFIG.AWS_REGION,
+    },
+  });
+}
+
 const apiClient = {
   async request<T>(
     endpoint: string,
@@ -37,7 +109,9 @@ const apiClient = {
       headers,
     };
 
-    const response = await fetch(endpoint, config);
+    // 构建完整的API URL
+    const fullUrl = getApiUrl(endpoint);
+    const response = await fetch(fullUrl, config);
 
     const text = await response.text();
     const data = text ? JSON.parse(text) : {};

@@ -208,6 +208,12 @@ resource "aws_iam_role_policy_attachment" "ec2_cloudwatch" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
+# IAM策略附加 - SSM (for CI/CD)
+resource "aws_iam_role_policy_attachment" "ec2_ssm" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # IAM实例配置文件
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "weblog-${var.environment}-ec2-profile"
@@ -337,10 +343,24 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 
 # CloudFront分发
 resource "aws_cloudfront_distribution" "frontend" {
+  # S3 origin for frontend static files
   origin {
     domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
     origin_id                = "S3-${aws_s3_bucket.frontend.bucket}"
+  }
+
+  # EC2 origin for API requests
+  origin {
+    domain_name = aws_instance.web_server.public_dns
+    origin_id   = "EC2-API-${aws_instance.web_server.id}"
+
+    custom_origin_config {
+      http_port              = 8080
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
   }
 
   enabled             = true
@@ -348,6 +368,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   default_root_object = "index.html"
   price_class         = var.cloudfront_price_class
 
+  # Default behavior for frontend static files
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
@@ -364,6 +385,68 @@ resource "aws_cloudfront_distribution" "frontend" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+  }
+
+  # Cache behavior for API requests
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "EC2-API-${aws_instance.web_server.id}"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Content-Type", "Origin", "Accept"]
+      cookies {
+        forward = "none"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0    # 不缓存API响应
+    max_ttl                = 0
+  }
+
+  # Cache behavior for WebSocket and other backend endpoints
+  ordered_cache_behavior {
+    path_pattern     = "/ws/*"
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "EC2-API-${aws_instance.web_server.id}"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
+  # Cache behavior for actuator endpoints
+  ordered_cache_behavior {
+    path_pattern     = "/actuator/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "EC2-API-${aws_instance.web_server.id}"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
   }
 
   # SPA路由支持
@@ -402,4 +485,105 @@ resource "aws_cloudwatch_log_group" "application" {
   tags = merge(var.common_tags, {
     Name = "weblog-${var.environment}-logs"
   })
+}
+
+# ======================================
+# CI/CD IAM Policies for existing EC2 Role
+# ======================================
+
+# IAM Policy for EC2 - CloudWatch + SSM
+resource "aws_iam_role_policy" "ec2_policy" {
+  name = "weblog-${var.environment}-ec2-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricData",
+          "ec2:DescribeVolumes",
+          "ec2:DescribeTags",
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:UpdateInstanceInformation",
+          "ssm:SendCommand",
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
+
+# ======================================
+# GitHub Actions IAM User (for CI/CD)
+# ======================================
+resource "aws_iam_user" "github_actions" {
+  name = "weblog-${var.environment}-github-actions"
+
+  tags = merge(var.common_tags, {
+    Name = "weblog-${var.environment}-github-actions"
+  })
+}
+
+# IAM Policy for GitHub Actions
+resource "aws_iam_user_policy" "github_actions_policy" {
+  name = "weblog-${var.environment}-github-actions-policy"
+  user = aws_iam_user.github_actions.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.frontend.arn,
+          "${aws_s3_bucket.frontend.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateInvalidation",
+          "cloudfront:ListDistributions"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ssm:SendCommand",
+          "ssm:GetCommandInvocation"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Access Key for GitHub Actions
+resource "aws_iam_access_key" "github_actions" {
+  user = aws_iam_user.github_actions.name
 } 

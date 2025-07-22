@@ -1,70 +1,165 @@
-# Docker Compose configuration for WeBlog application
+# ======================================
+# Docker Compose - Local Development Environment
+# ======================================
+# This configuration is optimized for local development
+# Uses environment variables for configuration
+# Production deployment uses different configuration
+
 services:
-  # Main Spring Boot application
+  # ======================================
+  # Main Spring Boot Application
+  # ======================================
   weblog-app:
-    build: . # Build from current directory using Dockerfile
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile.dev}
     ports:
-      - "8080:8080" # Map host port 8080 to container port 8080
-      - "35729:35729" # LiveReload port for hot reload
+      - "${SERVER_PORT:-8080}:8080"
+      - "${LIVERELOAD_PORT:-35729}:35729"
     depends_on:
-      - postgres # Wait for postgres service to start
-      - redis # Wait for redis service to start
+      - postgres
     volumes:
-      # Mount entire project for hot reload
+      # Source code hot reload
       - ./:/app
-      # Mount Gradle cache for faster builds
+      # Gradle cache persistence
       - gradle-cache:/root/.gradle
     environment:
-      # DevTools environment variables for better file watching
-      - SPRING_DEVTOOLS_RESTART_ENABLED=true
-      - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
-      - SPRING_DEVTOOLS_RESTART_POLL_INTERVAL=1000
-      - SPRING_DEVTOOLS_RESTART_QUIET_PERIOD=400
-      # Enable polling mode for Docker environment
+      # ======================================
+      # Environment Profile
+      # ======================================
+      - ENV=${ENV:-local}
+
+      # ======================================
+      # Database Configuration
+      # ======================================
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-weblog}
+      - DB_USERNAME=${DB_USERNAME:-weblog}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+
+      # ======================================
+      # Application Configuration
+      # ======================================
+      - SERVER_PORT=8080
+      - INIT_MODE=${INIT_MODE:-always}
+      - DDL_AUTO=${DDL_AUTO:-update}
+
+      # ======================================
+      # Development Settings
+      # ======================================
+      - DEVTOOLS_ENABLED=${DEVTOOLS_ENABLED:-true}
+      - LIVERELOAD_ENABLED=${LIVERELOAD_ENABLED:-true}
+      - SHOW_SQL=${SHOW_SQL:-true}
+      - FORMAT_SQL=${FORMAT_SQL:-true}
+
+      # ======================================
+      # Logging Configuration
+      # ======================================
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - APP_LOG_LEVEL=${APP_LOG_LEVEL:-DEBUG}
+      - WEB_LOG_LEVEL=${WEB_LOG_LEVEL:-DEBUG}
+      - SQL_LOG_LEVEL=${SQL_LOG_LEVEL:-DEBUG}
+
+      # ======================================
+      # Security Configuration
+      # ======================================
+      - JWT_SECRET=${JWT_SECRET:-weblog-dev-secret-key-256-bits-for-hmac-sha-algorithm-secure-enough-default-value}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+
+      # ======================================
+      # Feature Flags
+      # ======================================
+      - DOCKER_COMPOSE_ENABLED=false
+
+      # ======================================
+      # Java Options
+      # ======================================
       - JAVA_OPTS=-Dspring.devtools.restart.poll-interval=1000 -Dspring.devtools.restart.quiet-period=400
+
     command: ["./gradlew", "bootRun", "--continuous", "--no-daemon", "--info"]
-    restart: unless-stopped # Restart policy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-  # PostgreSQL database
+  # ======================================
+  # PostgreSQL Database
+  # ======================================
   postgres:
-    image: "postgres:15-alpine" # Use PostgreSQL 15 Alpine image
+    image: postgres:${POSTGRES_VERSION:-15}-alpine
     environment:
-      - "POSTGRES_DB=weblog" # Database name
-      - "POSTGRES_PASSWORD=password" # Database password
-      - "POSTGRES_USER=weblog" # Database username
+      - POSTGRES_DB=${DB_NAME:-weblog}
+      - POSTGRES_USER=${DB_USERNAME:-weblog}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
     ports:
-      - "5432:5432" # Map host port 5432 to container port 5432
+      - "${DB_EXTERNAL_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Persist database data
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-weblog} -d ${DB_NAME:-weblog}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Redis cache server
-  redis:
-    image: "redis:7-alpine" # Use Redis 7 Alpine image
-    ports:
-      - "6380:6379" # Map host port 6380 to container port 6379
-    volumes:
-      - redis_data:/data # Persist Redis data
-    restart: unless-stopped
-
-  # pgAdmin web interface for PostgreSQL
+  # ======================================
+  # pgAdmin - Database Management UI
+  # ======================================
   pgadmin:
-    image: "dpage/pgadmin4:latest" # Use latest pgAdmin4 image
+    image: dpage/pgadmin4:${PGADMIN_VERSION:-latest}
     environment:
-      - "PGADMIN_DEFAULT_EMAIL=admin@weblog.com" # Default login email
-      - "PGADMIN_DEFAULT_PASSWORD=admin123" # Default login password
-      - "PGADMIN_CONFIG_SERVER_MODE=False" # Disable server mode
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@weblog.dev}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
     ports:
-      - "5050:80" # Map host port 5050 to container port 80
+      - "${PGADMIN_PORT:-5050}:80"
     depends_on:
-      - postgres # Wait for postgres service to start
+      - postgres
     volumes:
-      - pgadmin_data:/var/lib/pgadmin # Persist pgAdmin data
+      - pgadmin_data:/var/lib/pgadmin
     restart: unless-stopped
+    profiles:
+      - tools # Optional service, start with: docker-compose --profile tools up
 
-# Named volumes for data persistence
+  # ======================================
+  # Redis (Optional - For Production Features)
+  # ======================================
+  redis:
+    image: redis:${REDIS_VERSION:-7}-alpine
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles:
+      - redis # Optional service, start with: docker-compose --profile redis up
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+# ======================================
+# Named Volumes
+# ======================================
 volumes:
-  postgres_data: # PostgreSQL data volume
-  redis_data: # Redis data volume
-  pgadmin_data: # pgAdmin data volume
-  gradle-cache: # Gradle cache volume
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  gradle-cache:
+    driver: local
+  redis_data:
+    driver: local

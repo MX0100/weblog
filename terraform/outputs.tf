@@ -106,6 +106,30 @@ output "cloudwatch_log_group_name" {
   value       = aws_cloudwatch_log_group.application.name
 }
 
+# ======================================
+# GitHub Actions CI/CD 输出信息
+# ======================================
+output "github_actions_access_key_id" {
+  description = "GitHub Actions IAM user access key ID"
+  value       = aws_iam_access_key.github_actions.id
+}
+
+output "github_actions_secret_access_key" {
+  description = "GitHub Actions IAM user secret access key"
+  value       = aws_iam_access_key.github_actions.secret
+  sensitive   = true
+}
+
+output "s3_bucket_for_frontend" {
+  description = "S3 bucket name for CI/CD frontend deployment"
+  value       = aws_s3_bucket.frontend.bucket
+}
+
+output "ec2_instance_for_backend" {
+  description = "EC2 instance ID for CI/CD backend deployment"
+  value       = aws_instance.web_server.id
+}
+
 # 部署说明
 output "deployment_instructions" {
   description = "Deployment instructions"
@@ -139,15 +163,21 @@ output "deployment_instructions" {
       1. 构建并上传前端到S3: aws s3 sync ./dist s3://${aws_s3_bucket.frontend.bucket}/
       2. 推送Docker镜像到Registry: docker push mx0100/weblog-backend:latest
       3. 重启EC2上的应用: ssh到EC2后运行 'docker-compose -f /opt/weblog/docker-compose.prod.yml pull && docker-compose -f /opt/weblog/docker-compose.prod.yml up -d'
-    EOT
+
+    🔧 GitHub Actions 配置:
+      - AWS_ACCESS_KEY_ID: ${aws_iam_access_key.github_actions.id}
+      - AWS_SECRET_ACCESS_KEY: [敏感信息，使用 terraform output github_actions_secret_access_key 查看]
+      - S3_BUCKET: ${aws_s3_bucket.frontend.bucket}
+      - CLOUDFRONT_DOMAIN: ${aws_cloudfront_distribution.frontend.domain_name}
+  EOT
 }
 
 # 环境变量配置（用于前端构建）
 output "frontend_env_variables" {
   description = "Environment variables for frontend build"
   value = {
-    VITE_API_BASE_URL = "http://${aws_instance.web_server.public_ip}:8080"
-    VITE_WS_BASE_URL  = "ws://${aws_instance.web_server.public_ip}:8080"
+    VITE_API_BASE_URL = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+    VITE_WS_BASE_URL  = "wss://${aws_cloudfront_distribution.frontend.domain_name}"
     VITE_ENVIRONMENT  = var.environment
   }
 }

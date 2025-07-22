@@ -343,7 +343,7 @@ const Home: React.FC = () => {
           setPosts((prevPosts) =>
             append ? [...prevPosts, ...processedPosts] : processedPosts
           );
-          setPage(pageResponse.page + 1); // Corrected: use page directly
+          setPage(pageResponse.page); // 修复：使用返回的页码
           setHasMore(!pageResponse.last);
         } else {
           setHasMore(false);
@@ -424,7 +424,7 @@ const Home: React.FC = () => {
   // Load more posts
   const loadMore = () => {
     if (!loading && hasMore) {
-      loadPosts(page + 1, true);
+      loadPosts(page + 1, true); // 请求下一页：当前页 + 1
     }
   };
 
@@ -550,13 +550,13 @@ const Home: React.FC = () => {
 
                 {/* Load more button */}
                 {hasMore && posts.length > 0 && (
-                  <div className="load-more-container">
+                  <div className="load-more-section">
                     <button
                       className="btn btn-secondary load-more-btn"
                       onClick={loadMore}
                       disabled={loading}
                     >
-                      {loading ? "Loading..." : "Load More"}
+                      {loading ? "加载更多..." : "Load More"}
                     </button>
                   </div>
                 )}

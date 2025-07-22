@@ -41,6 +41,10 @@ const Navbar: React.FC<NavbarProps> = ({
     message: string;
   } | null>(null);
 
+  // 添加部署测试标记
+  const deploymentVersion =
+    "v2.0-auto-deploy-test-" + new Date().toISOString().slice(0, 10);
+
   // Handle search user
   const handleSearchUser = async () => {
     if (!searchQuery.trim()) {

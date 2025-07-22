@@ -83,24 +83,22 @@ export class NotificationManager {
     }, 10000);
   }
 
-  // Get WebSocket URL with token
+  // Get WebSocket URL with token - 智能环境切换
   private getWebSocketUrl(): string {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    let host = window.location.host;
-
-    // Handle different environments
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      host = "localhost:8080";
-    } else {
-      host = `${window.location.hostname}:8080`;
+    // 优先使用环境变量
+    const envWsUrl = import.meta.env.VITE_WS_URL;
+    if (envWsUrl) {
+      return `${envWsUrl}/notifications?token=${this.token}`;
     }
 
-    const wsUrl = `${protocol}//${host}/ws/notifications?token=${this.token}`;
-
-    return wsUrl;
+    // 根据环境自动判断
+    if (import.meta.env.DEV) {
+      // 开发环境：直接连接本地WebSocket
+      return `ws://localhost:8080/ws/notifications?token=${this.token}`;
+    } else {
+      // 生产环境：通过CloudFront WSS代理访问EC2
+      return `wss://dcyz06osekbqs.cloudfront.net/ws/notifications?token=${this.token}`;
+    }
   }
 
   // Handle incoming notifications

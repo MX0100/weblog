@@ -1,52 +1,91 @@
-name: CI
+name: CI Pipeline
 
 on:
   pull_request:
     branches: [main, develop]
   push:
     branches: [develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "18"
+  JAVA_VERSION: "17"
+  POSTGRES_VERSION: "15"
 
 jobs:
+  # ======================================
+  # 前端测试
+  # ======================================
   test-frontend:
+    name: 🌐 Frontend Tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           cache-dependency-path: WeBlog-frontend/package-lock.json
 
-      - name: Install frontend dependencies
+      - name: 📦 Install dependencies
         working-directory: WeBlog-frontend
         run: npm ci
 
-      - name: Lint frontend code
+      - name: 🔍 Lint frontend code
         working-directory: WeBlog-frontend
         run: npm run lint
 
-      - name: Build frontend
+      - name: 🧪 Run frontend tests
+        working-directory: WeBlog-frontend
+        run: npm test -- --coverage
+
+      - name: 🏗️ Build frontend
         working-directory: WeBlog-frontend
         run: npm run build
 
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./WeBlog-frontend/coverage/lcov.info
+          flags: frontend
+
+  # ======================================
+  # 后端测试
+  # ======================================
   test-backend:
+    name: ☕ Backend Tests
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: weblog_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: ☕ Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
 
-      - name: Cache Gradle packages
+      - name: 🗄️ Cache Gradle packages
         uses: actions/cache@v3
         with:
           path: |
@@ -56,26 +95,144 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Make gradlew executable
+      - name: 🔧 Make gradlew executable
         working-directory: WeBlog_backend
         run: chmod +x ./gradlew
 
-      - name: Test backend
+      - name: 🧪 Run unit tests
         working-directory: WeBlog_backend
         run: ./gradlew test
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: weblog_test
+          DB_USERNAME: test
+          DB_PASSWORD: test
 
-      - name: Build backend
+      - name: 🏗️ Build backend
         working-directory: WeBlog_backend
         run: ./gradlew build -x test
 
+      - name: 📊 Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: backend-test-results
+          path: WeBlog_backend/build/reports/tests/
+
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./WeBlog_backend/build/reports/jacoco/test/jacocoTestReport.xml
+          flags: backend
+
+  # ======================================
+  # 集成测试
+  # ======================================
+  integration-test:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_USER: weblog
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: weblog
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: WeBlog-frontend/package-lock.json
+
+      - name: 🗄️ Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: 🔧 Make gradlew executable
+        working-directory: WeBlog_backend
+        run: chmod +x ./gradlew
+
+      - name: 🚀 Start backend
+        working-directory: WeBlog_backend
+        run: |
+          ./gradlew bootRun &
+          echo $! > backend.pid
+        env:
+          SPRING_PROFILES_ACTIVE: staging
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: weblog
+          DB_USERNAME: weblog
+          DB_PASSWORD: password
+          JWT_SECRET: test-secret-key-for-integration-testing-32-characters-long
+
+      - name: 📦 Install frontend dependencies
+        working-directory: WeBlog-frontend
+        run: npm ci
+
+      - name: ⏳ Wait for backend to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/actuator/health; then
+              echo "Backend is ready!"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 10
+          done
+
+      - name: 🧪 Run integration tests
+        working-directory: WeBlog-frontend
+        run: npm run test:e2e
+        env:
+          VITE_API_BASE_URL: http://localhost:8080
+
+      - name: 🛑 Stop backend
+        if: always()
+        run: |
+          if [ -f WeBlog_backend/backend.pid ]; then
+            kill $(cat WeBlog_backend/backend.pid) || true
+          fi
+
+  # ======================================
+  # 安全扫描
+  # ======================================
   security-scan:
+    name: 🔒 Security Scan
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner
+      - name: 🔍 Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "fs"
@@ -83,8 +240,94 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
 
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: 📊 Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
+
+      - name: 🔐 OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "WeBlog"
+          path: "."
+          format: "HTML"
+
+  # ======================================
+  # 代码质量检查
+  # ======================================
+  code-quality:
+    name: 📊 Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # SonarCloud needs full history
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+
+      - name: 🗄️ Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: 🗄️ Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: 🔧 Make gradlew executable
+        working-directory: WeBlog_backend
+        run: chmod +x ./gradlew
+
+      - name: 📊 Run SonarCloud analysis
+        working-directory: WeBlog_backend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonarqube --info
+
+  # ======================================
+  # 构建镜像
+  # ======================================
+  build-images:
+    name: 🐳 Build Images
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+    if: github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./WeBlog_backend
+          file: ./WeBlog_backend/Dockerfile
+          tags: weblog-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🏗️ Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./WeBlog-frontend
+          file: ./WeBlog-frontend/Dockerfile
+          tags: weblog-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

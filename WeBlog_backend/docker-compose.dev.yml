@@ -1,0 +1,122 @@
+# ======================================
+# Docker Compose - Development Environment Override
+# ======================================
+# 开发环境配置文件，自动覆盖 compose.yaml 中的设置
+# 使用方法：docker-compose -f compose.yaml -f docker-compose.dev.yml up
+
+services:
+  weblog-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    working_dir: /app
+    volumes:
+      # 源码热重载 - 排除build目录避免冲突
+      - ./src:/app/src:cached
+      - ./build.gradle:/app/build.gradle:ro
+      - ./settings.gradle:/app/settings.gradle:ro
+      # Gradle缓存持久化
+      - gradle-cache:/home/weblog/.gradle
+      # 构建目录
+      - ./build:/app/build:delegated
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+      - "${LIVERELOAD_PORT:-35729}:35729"
+    environment:
+      # ======================================
+      # 环境配置
+      # ======================================
+      - ENV=local
+      - SPRING_PROFILES_ACTIVE=local
+
+      # ======================================
+      # 数据库配置
+      # ======================================
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-weblog}
+      - DB_USERNAME=${DB_USERNAME:-weblog}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+
+      # ======================================
+      # 热部署优化配置
+      # ======================================
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+      - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
+      - SPRING_DEVTOOLS_RESTART_POLL_INTERVAL=1000
+      - SPRING_DEVTOOLS_RESTART_QUIET_PERIOD=400
+      - SPRING_DEVTOOLS_RESTART_TRIGGER_FILE=.reloadtrigger
+
+      # ======================================
+      # JVM 优化配置
+      # ======================================
+      - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Dspring.devtools.restart.enabled=true
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+
+      # ======================================
+      # 日志配置
+      # ======================================
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_WEB=DEBUG
+      - LOGGING_LEVEL_SQL=DEBUG
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # 开发环境健康检查
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    # 重启策略
+    restart: unless-stopped
+
+    # 资源限制（开发环境适中）
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+
+  # PostgreSQL 数据库
+  postgres:
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-weblog} -d ${DB_NAME:-weblog}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# ======================================
+# 开发专用卷配置
+# ======================================
+volumes:
+  gradle-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/.gradle-cache
+
+# ======================================
+# 开发专用网络配置
+# ======================================
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
