@@ -171,7 +171,7 @@ jobs:
         working-directory: WeBlog-frontend
         env:
           VITE_API_BASE_URL: https://${{ secrets.CLOUDFRONT_DOMAIN }}
-          VITE_WS_URL: wss://${{ secrets.CLOUDFRONT_DOMAIN }}/api/ws
+          VITE_WS_URL: wss://${{ secrets.CLOUDFRONT_DOMAIN }}/ws
           VITE_ENV_NAME: production
         run: |
           echo "🏗️ 构建生产环境前端..."
