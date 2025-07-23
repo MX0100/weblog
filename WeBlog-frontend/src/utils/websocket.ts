@@ -91,13 +91,28 @@ export class NotificationManager {
       return `${envWsUrl}/notifications?token=${this.token}`;
     }
 
+    // 检查localStorage中的WebSocket连接偏好
+    const wsPreference = localStorage.getItem("weblog_ws_mode");
+
     // 根据环境自动判断
     if (import.meta.env.DEV) {
       // 开发环境：直接连接本地WebSocket
       return `ws://localhost:8080/ws/notifications?token=${this.token}`;
     } else {
-      // 生产环境：通过CloudFront WSS代理访问EC2
-      return `wss://dcyz06osekbqs.cloudfront.net/ws/notifications?token=${this.token}`;
+      // 生产环境：根据用户偏好或自动检测
+      if (wsPreference === "direct") {
+        // 用户选择直连EC2模式
+        console.info(
+          "🔌 WebSocket: 使用直连EC2模式 (可能需要浏览器允许不安全内容)"
+        );
+        return `ws://34.210.43.155:8080/ws/notifications?token=${this.token}`;
+      } else {
+        // 默认尝试CloudFront WSS
+        console.info(
+          '🔌 WebSocket: 使用CloudFront WSS模式 (如遇问题，在控制台运行: localStorage.setItem("weblog_ws_mode", "direct") 后刷新页面)'
+        );
+        return `wss://dcyz06osekbqs.cloudfront.net/ws/notifications?token=${this.token}`;
+      }
     }
   }
 
