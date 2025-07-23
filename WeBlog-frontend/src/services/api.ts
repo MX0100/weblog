@@ -21,19 +21,19 @@ import type {
 // Environment Configuration
 // ======================================
 const ENV_CONFIG = {
-  // API Configuration - 修复：通过CloudFront HTTPS终止访问EC2
+  // API Configuration - 使用环境变量，避免硬编码
   API_BASE_URL:
     import.meta.env.VITE_API_BASE_URL ||
     (import.meta.env.DEV
       ? "http://localhost:8080"
-      : "https://dcyz06osekbqs.cloudfront.net"), // 修改：通过CloudFront代理
+      : "https://dcyz06osekbqs.cloudfront.net"), // 保留作为fallback
 
-  // WebSocket Configuration - 修复：通过CloudFront WebSocket代理
+  // WebSocket Configuration - 使用环境变量
   WS_URL:
     import.meta.env.VITE_WS_URL ||
     (import.meta.env.DEV
       ? "ws://localhost:8080/ws"
-      : "wss://dcyz06osekbqs.cloudfront.net/ws"), // 修改：通过CloudFront WSS
+      : "wss://dcyz06osekbqs.cloudfront.net/ws"), // 保留作为fallback
 
   // Application Configuration
   APP_TITLE: import.meta.env.VITE_APP_TITLE || "WeBlog",

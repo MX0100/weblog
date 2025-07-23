@@ -83,7 +83,7 @@ export class NotificationManager {
     }, 10000);
   }
 
-  // Get WebSocket URL with token - 智能环境切换
+  // Get WebSocket URL with token - 使用环境变量配置
   private getWebSocketUrl(): string {
     // 优先使用环境变量
     const envWsUrl = import.meta.env.VITE_WS_URL;
@@ -107,11 +107,14 @@ export class NotificationManager {
         );
         return `ws://34.210.43.155:8080/ws/notifications?token=${this.token}`;
       } else {
-        // 默认尝试CloudFront WSS
+        // 默认尝试CloudFront WSS - 使用环境变量
+        const cloudfrontDomain =
+          import.meta.env.VITE_CLOUDFRONT_DOMAIN ||
+          "dcyz06osekbqs.cloudfront.net";
         console.info(
           '🔌 WebSocket: 使用CloudFront WSS模式 (如遇问题，在控制台运行: localStorage.setItem("weblog_ws_mode", "direct") 后刷新页面)'
         );
-        return `wss://dcyz06osekbqs.cloudfront.net/ws/notifications?token=${this.token}`;
+        return `wss://${cloudfrontDomain}/ws/notifications?token=${this.token}`;
       }
     }
   }
