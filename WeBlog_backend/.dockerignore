@@ -1,19 +1,19 @@
-# 忽略构建输出
+# Ignore build outputs
 build/
 target/
 .gradle/
 
-# 忽略 IDE 文件
+# Ignore IDE files
 .idea/
 .vscode/
 *.iml
 
-# 忽略 Git 文件
+# Ignore Git files
 .git/
 .gitignore
 
-# 忽略其他文件
+# Ignore other files
 README.md
 *.md
 .env
-*.log 
+*.log

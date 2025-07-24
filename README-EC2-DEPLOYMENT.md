@@ -1,13 +1,13 @@
-# WeBlog EC2+S3+CloudFront 部署指南
+# WeBlog EC2+S3+CloudFront Deployment Guide
 
-## 🏗️ 架构概览
+## 🏗️ Architecture Overview
 
-这是一个针对 AWS Free Tier 优化的部署架构：
+This is a deployment architecture optimized for AWS Free Tier:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   CloudFront    │────│      S3         │    │      EC2        │
-│  (CDN + HTTPS)  │    │ (静态前端文件)   │    │ (Docker + 后端)  │
+│  (CDN + HTTPS)  │    │(Static Frontend)│    │(Docker + Backend) │                 │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                                         │
                                                ┌─────────────────┐
@@ -16,34 +16,34 @@
                                                └─────────────────┘
 ```
 
-### ✅ 优势
+### ✅ Advantages
 
-- **Free Tier 友好**: EC2 t3.micro + RDS db.t3.micro
-- **WebSocket 支持**: 前端直连 EC2，避免 CloudFront 代理限制
-- **高性能**: CloudFront 全球 CDN 加速静态资源
-- **简单架构**: 易于理解和维护
-- **自动扩展**: 支持未来升级到更强配置
+- **Free Tier Friendly**: EC2 t3.micro + RDS db.t3.micro
+- **WebSocket Support**: Frontend connects directly to EC2, avoiding CloudFront proxy limitations
+- **High Performance**: CloudFront global CDN accelerates static assets
+- **Simple Architecture**: Easy to understand and maintain
+- **Auto Scaling**: Supports future upgrades to higher specs
 
-### 💰 成本估算
+### 💰 Cost Estimate
 
-- **Free Tier 内**: $0-5/月
-- **超出后**: ~$15-25/月（小规模使用）
+- **Within Free Tier**: $0-5/month
+- **Beyond Free Tier**: ~$15-25/month (for small scale usage)
 
-## 🚀 快速部署
+## 🚀 Quick Deployment
 
-### 前置条件
+### Prerequisites
 
 1. **AWS CLI**
 
    ```bash
-   # 安装并配置
+   # Install and configure
    aws configure
    ```
 
 2. **Terraform** (>= 1.0)
 
    ```bash
-   # 下载: https://www.terraform.io/downloads.html
+   # Download: https://www.terraform.io/downloads.html
    terraform version
    ```
 
@@ -59,53 +59,53 @@
    npm --version
    ```
 
-### 创建 Key Pair
+### Create Key Pair
 
 ```bash
-# 在AWS中创建Key Pair
+# Create Key Pair in AWS
 aws ec2 create-key-pair --key-name weblog-test-key --region us-west-2 --query 'KeyMaterial' --output text > weblog-test-key.pem
 
-# Windows用户可以用GUI在EC2控制台创建
+# Windows users can use the EC2 console GUI to create
 ```
 
-### 一键部署
+### One-Click Deployment
 
 ```bash
-# 使用部署脚本
+# Use deployment script
 ./deploy-ec2.sh test us-west-2 weblog-test-key
 
-# 参数说明:
+# Parameter description:
 # 1. environment: test/staging/prod
 # 2. aws-region: us-west-2
-# 3. key-pair-name: 你的EC2 Key Pair名称
+# 3. key-pair-name: your EC2 Key Pair name
 ```
 
-## 🔧 手动部署步骤
+## 🔧 Manual Deployment Steps
 
-如果你想了解详细过程或自定义配置：
+If you want to understand the process or customize config:
 
-### 1. 配置 Terraform 变量
+### 1. Configure Terraform Variables
 
-编辑 `terraform/environments/test.tfvars`:
+Edit `terraform/environments/test.tfvars`:
 
 ```hcl
 environment = "test"
 region = "us-west-2"
 
-# EC2配置
+# EC2 config
 ec2_instance_type = "t3.micro"
 ec2_key_pair_name = "your-key-name"
 
-# RDS配置
+# RDS config
 db_instance_class = "db.t3.micro"
 db_allocated_storage = 20
 db_name = "weblog_test"
 
-# S3配置
+# S3 config
 s3_bucket_name = "weblog-test-frontend-unique-suffix"
 ```
 
-### 2. 部署基础设施
+### 2. Deploy Infrastructure
 
 ```bash
 cd terraform
@@ -114,217 +114,217 @@ terraform plan -var-file="environments/test.tfvars"
 terraform apply -var-file="environments/test.tfvars"
 ```
 
-### 3. 获取部署信息
+### 3. Get Deployment Info
 
 ```bash
-# 获取重要输出
+# Get important outputs
 terraform output ec2_public_ip
 terraform output s3_bucket_name
 terraform output cloudfront_domain_name
 terraform output database_password
 ```
 
-### 4. 构建和部署应用
+### 4. Build and Deploy Application
 
 ```bash
-# 构建后端镜像
+# Build backend image
 cd ../WeBlog_backend
 docker build -f Dockerfile.prod -t mx0100/weblog-backend:latest .
 
-# 构建前端
+# Build frontend
 cd ../WeBlog-frontend
 npm install
 
-# 设置环境变量
+# Set environment variables
 export VITE_API_BASE_URL=http://YOUR_EC2_IP:8080
 export VITE_WS_BASE_URL=ws://YOUR_EC2_IP:8080
 
 npm run build
 
-# 上传到S3
+# Upload to S3
 aws s3 sync dist/ s3://YOUR_S3_BUCKET/ --region us-west-2
 ```
 
-## 📊 部署后验证
+## 📊 Post-Deployment Verification
 
-### 1. 检查后端健康状态
+### 1. Check Backend Health
 
 ```bash
 curl http://YOUR_EC2_IP:8080/actuator/health
 ```
 
-### 2. 访问前端
+### 2. Access Frontend
 
 - CloudFront URL: `https://YOUR_CLOUDFRONT_DOMAIN`
 - S3 Direct URL: `http://YOUR_S3_BUCKET.s3-website-us-west-2.amazonaws.com`
 
-### 3. 测试 WebSocket 连接
+### 3. Test WebSocket Connection
 
-在浏览器控制台测试：
+In browser console:
 
 ```javascript
 const ws = new WebSocket("ws://YOUR_EC2_IP:8080/ws");
 ws.onopen = () => console.log("WebSocket connected");
 ```
 
-## 🔧 运维管理
+## 🔧 Operations & Maintenance
 
-### SSH 连接 EC2
+### SSH to EC2
 
 ```bash
 ssh -i your-key.pem ec2-user@YOUR_EC2_IP
 ```
 
-### 查看应用日志
+### View Application Logs
 
 ```bash
-# SSH到EC2后
+# After SSH to EC2
 docker logs weblog-backend
 ```
 
-### 重启应用
+### Restart Application
 
 ```bash
-# SSH到EC2后
+# After SSH to EC2
 cd /opt/weblog
 docker-compose -f docker-compose.prod.yml restart
 ```
 
-### 更新应用
+### Update Application
 
-#### 更新后端:
+#### Update Backend:
 
 ```bash
-# 构建新镜像
+# Build new image
 docker build -f Dockerfile.prod -t mx0100/weblog-backend:latest .
 
-# SSH到EC2，拉取并重启
+# SSH to EC2, pull and restart
 ssh -i your-key.pem ec2-user@YOUR_EC2_IP
 cd /opt/weblog
 docker-compose -f docker-compose.prod.yml pull
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-#### 更新前端:
+#### Update Frontend:
 
 ```bash
-# 重新构建
+# Rebuild
 npm run build
 
-# 上传到S3
+# Upload to S3
 aws s3 sync dist/ s3://YOUR_S3_BUCKET/ --region us-west-2
 
-# 清除CloudFront缓存
+# Invalidate CloudFront cache
 aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
 ```
 
-## 🛡️ 安全考虑
+## 🛡️ Security Considerations
 
-### 生产环境建议:
+### Production Recommendations:
 
-1. **限制访问 IP**
+1. **Restrict Access IP**
 
    ```hcl
    allowed_cidr_blocks = ["YOUR_OFFICE_IP/32"]
    ```
 
-2. **启用 HTTPS**
+2. **Enable HTTPS**
 
-   - EC2 配置 SSL 证书（Let's Encrypt）
-   - 更新安全组规则
+   - Configure SSL certificate on EC2 (Let's Encrypt)
+   - Update security group rules
 
-3. **数据库安全**
+3. **Database Security**
 
-   - 更强的密码策略
-   - 备份加密
+   - Stronger password policy
+   - Encrypted backups
 
-4. **网络隔离**
-   - 将 RDS 迁移到私有子网
-   - 使用 NAT Gateway（会产生费用）
+4. **Network Isolation**
+   - Move RDS to private subnet
+   - Use NAT Gateway (may incur cost)
 
-## 📈 扩展路径
+## 📈 Upgrade Path
 
-### 升级到生产配置:
+### Upgrade to Production Config:
 
-1. **计算资源**
+1. **Compute Resources**
 
    - EC2: t3.micro → t3.small/medium
    - RDS: db.t3.micro → db.t3.small
 
-2. **高可用**
+2. **High Availability**
 
-   - 多 AZ 部署
+   - Multi-AZ deployment
    - Application Load Balancer
    - Auto Scaling Group
 
-3. **监控增强**
-   - CloudWatch 详细监控
-   - ELK/Grafana 日志分析
-   - 自定义指标
+3. **Enhanced Monitoring**
+   - Detailed CloudWatch monitoring
+   - ELK/Grafana log analysis
+   - Custom metrics
 
-## 🆘 故障排除
+## 🆘 Troubleshooting
 
-### 常见问题:
+### Common Issues:
 
-1. **EC2 无法访问**
+1. **EC2 Not Accessible**
 
-   - 检查安全组规则
-   - 确认 Key Pair 正确
-   - 验证 AWS 凭证
+   - Check security group rules
+   - Confirm Key Pair is correct
+   - Validate AWS credentials
 
-2. **数据库连接失败**
+2. **Database Connection Failure**
 
-   - 检查数据库密码
-   - 验证网络连接
-   - 查看应用日志
+   - Check DB password
+   - Validate network connectivity
+   - View application logs
 
-3. **前端无法访问后端**
+3. **Frontend Cannot Access Backend**
 
-   - 检查 CORS 配置
-   - 验证 API URL 环境变量
-   - 测试网络连接
+   - Check CORS config
+   - Validate API URL env variable
+   - Test network connectivity
 
-4. **WebSocket 连接失败**
-   - 确认端口 8080 开放
-   - 检查防火墙设置
-   - 验证 WebSocket URL
+4. **WebSocket Connection Failure**
+   - Confirm port 8080 is open
+   - Check firewall settings
+   - Validate WebSocket URL
 
-### 获取帮助:
+### Getting Help:
 
 ```bash
-# 查看Terraform输出
+# View Terraform outputs
 terraform output
 
-# 查看AWS资源
+# View AWS resources
 aws ec2 describe-instances --region us-west-2
 aws s3 ls
 aws rds describe-db-instances --region us-west-2
 
-# 查看日志
+# View logs
 ssh -i your-key.pem ec2-user@YOUR_EC2_IP
 sudo tail -f /var/log/weblog-setup.log
 docker logs weblog-backend
 ```
 
-## 📝 维护清单
+## 📝 Maintenance Checklist
 
-### 每周检查:
+### Weekly:
 
-- [ ] EC2 实例状态
-- [ ] 应用健康检查
-- [ ] 数据库备份
-- [ ] CloudWatch 指标
+- [ ] EC2 instance status
+- [ ] Application health check
+- [ ] Database backups
+- [ ] CloudWatch metrics
 
-### 每月检查:
+### Monthly:
 
-- [ ] AWS 费用账单
-- [ ] 安全更新
-- [ ] 备份测试
-- [ ] 性能优化
+- [ ] AWS billing
+- [ ] Security updates
+- [ ] Backup testing
+- [ ] Performance optimization
 
-### 季度检查:
+### Quarterly:
 
-- [ ] 架构评估
-- [ ] 成本优化
-- [ ] 安全审计
-- [ ] 容量规划
+- [ ] Architecture review
+- [ ] Cost optimization
+- [ ] Security audit
+- [ ] Capacity planning

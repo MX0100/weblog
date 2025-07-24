@@ -25,6 +25,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(webSocketHandler, "/ws/notifications")
                 .addInterceptors(authInterceptor)
-                .setAllowedOrigins("*"); // 在生产环境中应该配置具体的域名
+                .setAllowedOrigins("https://dcyz06osekbqs.cloudfront.net","http://localhost:5173");
     }
 } 

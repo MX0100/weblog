@@ -1,69 +1,101 @@
-# React + TypeScript + Vite
+# WeBlog Frontend (React + TypeScript + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+WeBlog is a modern blogging/social platform supporting user registration, posting, commenting, relationship pairing, and real-time notifications. The frontend is built with React + TypeScript + Vite, supporting hot module replacement, modular development, and cloud CI/CD deployment.
 
-Currently, two official plugins are available:
+## 🚀 Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18**
+- **TypeScript**
+- **Vite**
+- **React Router**
+- **Quill/React-Quill** (Rich Text Editor)
+- **WebSocket** (Real-time notifications)
+- **AWS S3 + CloudFront** (Production static hosting)
 
-## Expanding the ESLint configuration
+## ✨ Main Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- User registration, login, logout
+- User profile management
+- Post creation, editing, deletion, commenting
+- Pair request, relationship history, management
+- Real-time WebSocket notifications (pairing, comments, posts, etc.)
+- Responsive design for desktop and mobile
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Local Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
+2. **Configure environment variables**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+   - Copy `env.example` to `.env.local` and edit as needed:
+     ```bash
+     cp env.example .env.local
+     ```
+   - By default, API is at `http://localhost:8080`, WebSocket at `ws://localhost:8080/ws`
+
+3. **Start the dev server**
+   ```bash
+   npm run dev
+   ```
+   Visit [http://localhost:5173](http://localhost:5173)
+
+## 🌐 Production Deployment
+
+- Production is built and deployed automatically via GitHub Actions to AWS S3 + CloudFront.
+- Just push code to the `master` branch and CI/CD will:
+  - Build the frontend
+  - Upload to S3
+  - Invalidate CloudFront cache
+
+## ⚙️ Environment Variables
+
+| Variable               | Description                    | Example/Default               |
+| ---------------------- | ------------------------------ | ----------------------------- |
+| VITE_API_BASE_URL      | Backend API base URL           | http://localhost:8080         |
+| VITE_WS_URL            | WebSocket URL                  | ws://localhost:8080/ws        |
+| VITE_CLOUDFRONT_DOMAIN | CloudFront domain              | dcyz06osekbqs.cloudfront.net  |
+| VITE_S3_BUCKET         | S3 bucket name                 | weblog-frontend-20250721-3566 |
+| VITE_AWS_REGION        | AWS region                     | us-west-2                     |
+| VITE_APP_TITLE         | App title                      | WeBlog                        |
+| VITE_ENV_NAME          | Environment (local/production) | local                         |
+| VITE_ENABLE_DEBUG      | Enable debug mode              | true                          |
+
+## 🧩 Project Structure
+
+```
+WeBlog-frontend/
+├── public/                # Static assets
+├── src/
+│   ├── assets/            # Images, SVGs, etc.
+│   ├── components/        # Pages and UI components
+│   ├── services/          # API wrappers
+│   ├── types/             # TypeScript type definitions
+│   ├── utils/             # Utility functions
+│   ├── styles/            # Global styles
+│   └── main.tsx           # App entry point
+├── env.example            # Environment variable example
+├── package.json           # Dependencies and scripts
+└── README.md              # Project documentation
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🐞 Troubleshooting
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **WebSocket not connecting?**
+  - Check if CloudFront supports `wss` (WebSocket Secure) and behavior allows WebSocket traffic. Make sure backend security group/ports are open.
+  - Check if `VITE_WS_URL` is correct.
+  - Use browser console for error details.
+- **API 404/401 errors?**
+  - Check backend context-path config; production should not have duplicate `/api`.
+  - Check CORS config; CloudFront domain must be allowed by backend.
+- **Blank page or frontend errors?**
+  - Check environment variables, API addresses, and build logs.
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📞 Contact & Support
+
+For questions, contact the project maintainer or open an issue.
+
+---
+
+_This documentation is auto-generated by AI Assistant. Feel free to improve it!_

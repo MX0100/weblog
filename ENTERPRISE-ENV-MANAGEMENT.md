@@ -1,118 +1,118 @@
-# 🏗️ 企业级环境配置管理体系
+# 🏗️ Enterprise-Grade Environment Configuration Management System
 
-> **"一套代码，多环境部署"** - 现代 DevOps 的核心理念
+> **"One codebase, multiple environment deployments"** - The core concept of modern DevOps
 
-## 🎯 **问题解决方案总览**
+## 🎯 **Solution Overview**
 
-### **核心问题**
+### **Core Problems**
 
-- ❌ 本地/生产环境配置混乱
-- ❌ 硬编码配置值
-- ❌ 手动配置更改
-- ❌ 敏感信息泄露风险
-- ❌ 环境间不一致
+- ❌ Local/production environment configuration confusion
+- ❌ Hardcoded config values
+- ❌ Manual config changes
+- ❌ Sensitive info leakage risk
+- ❌ Inconsistency between environments
 
-### **解决方案架构**
+### **Solution Architecture**
 
-- ✅ **12-Factor App**：完全基于环境变量的配置
-- ✅ **环境自动检测**：无需手动切换配置
-- ✅ **密钥集中管理**：AWS Secrets Manager
-- ✅ **配置即代码**：版本控制和审计
-- ✅ **零接触部署**：自动化的 CI/CD 流水线
+- ✅ **12-Factor App**: Fully environment variable-based configuration
+- ✅ **Automatic environment detection**: No manual switching needed
+- ✅ **Centralized secret management**: AWS Secrets Manager
+- ✅ **Config as code**: Version control and auditability
+- ✅ **Zero-touch deployment**: Automated CI/CD pipeline
 
-## 🏛️ **架构设计**
+## 🏛️ **Architecture Design**
 
-### **环境分层架构**
+### **Environment Layered Architecture**
 
 ```mermaid
 graph TB
-    subgraph "🔧 开发环境"
-        Dev_Code[源代码] --> Dev_Docker[Docker Compose]
+    subgraph "🔧 Development Environment"
+        Dev_Code[Source Code] --> Dev_Docker[Docker Compose]
         Dev_Docker --> Dev_DB[(PostgreSQL Docker)]
         Dev_Docker --> Dev_App[Spring Boot DevTools]
     end
 
-    subgraph "🚀 生产环境"
-        Prod_Code[源代码] --> Prod_Build[Docker Build]
-        Prod_Build --> Prod_EC2[EC2 实例]
+    subgraph "🚀 Production Environment"
+        Prod_Code[Source Code] --> Prod_Build[Docker Build]
+        Prod_Build --> Prod_EC2[EC2 Instance]
         Prod_EC2 --> Prod_RDS[(AWS RDS)]
         Prod_EC2 --> Prod_S3[S3 + CloudFront]
     end
 
-    subgraph "🔐 配置管理"
-        Env_Vars[环境变量] --> Secrets[AWS Secrets Manager]
-        Config_Files[配置文件] --> Profiles[Spring Profiles]
+    subgraph "🔐 Config Management"
+        Env_Vars[Environment Variables] --> Secrets[AWS Secrets Manager]
+        Config_Files[Config Files] --> Profiles[Spring Profiles]
     end
 
     Dev_Code -.-> Env_Vars
     Prod_Code -.-> Env_Vars
 ```
 
-### **配置流转机制**
+### **Config Flow Mechanism**
 
-| 环境         | 配置来源                                                  | 密钥管理       | 部署方式       |
-| ------------ | --------------------------------------------------------- | -------------- | -------------- |
-| **本地开发** | `.env` + `application-local.properties`                   | 开发密钥       | Docker Compose |
-| **测试环境** | CI/CD 变量 + `application-test.properties`                | 测试专用密钥   | 自动化部署     |
-| **生产环境** | AWS Secrets Manager + `application-production.properties` | 企业级密钥轮换 | 蓝绿部署       |
+| Environment    | Config Source                                             | Secret Management       | Deployment Method |
+| -------------- | --------------------------------------------------------- | ----------------------- | ----------------- |
+| **Local Dev**  | `.env` + `application-local.properties`                   | Dev keys                | Docker Compose    |
+| **Test**       | CI/CD vars + `application-test.properties`                | Test-only keys          | Automated deploy  |
+| **Production** | AWS Secrets Manager + `application-production.properties` | Enterprise key rotation | Blue/green deploy |
 
-## 📁 **文件结构变更**
+## 📁 **File Structure Changes**
 
-### **后端配置结构**
+### **Backend Config Structure**
 
 ```
 WeBlog_backend/
 ├── src/main/resources/
-│   ├── application.properties          # 📝 主配置 (环境变量驱动)
-│   ├── application-local.properties    # 🔧 本地开发专用
-│   ├── application-production.properties # 🚀 生产环境专用
-│   └── data.sql                       # 📊 测试数据 (仅本地)
-├── Dockerfile                         # 🚀 生产环境构建
-├── Dockerfile.dev                     # 🔧 开发环境构建
-├── compose.yaml                       # 🐳 Docker Compose配置
-└── env.example                        # 📋 环境变量示例
+│   ├── application.properties          # 📝 Main config (env var driven)
+│   ├── application-local.properties    # 🔧 Local dev only
+│   ├── application-production.properties # 🚀 Production only
+│   └── data.sql                       # 📊 Test data (local only)
+├── Dockerfile                         # 🚀 Production build
+├── Dockerfile.dev                     # 🔧 Dev build
+├── compose.yaml                       # 🐳 Docker Compose config
+└── env.example                        # 📋 Env var example
 ```
 
-### **前端配置结构**
+### **Frontend Config Structure**
 
 ```
 WeBlog-frontend/
 ├── src/services/
-│   └── api.ts                         # 🌐 环境感知API配置
-├── env.example                        # 📋 前端环境变量示例
-└── vite.config.ts                     # ⚡ Vite构建配置
+│   └── api.ts                         # 🌐 Env-aware API config
+├── env.example                        # 📋 Frontend env var example
+└── vite.config.ts                     # ⚡ Vite build config
 ```
 
-## 🔧 **核心配置文件解析**
+## 🔧 **Core Config File Analysis**
 
-### **1. 主配置文件 (`application.properties`)**
+### **1. Main Config File (`application.properties`)**
 
 ```properties
-# 🎯 智能环境检测
+# 🎯 Smart environment detection
 spring.profiles.active=${ENV:local}
 
-# 🗄️ 数据库配置 (环境变量驱动)
+# 🗄️ Database config (env var driven)
 spring.datasource.url=jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:weblog}
 spring.datasource.username=${DB_USERNAME:weblog}
 spring.datasource.password=${DB_PASSWORD:password}
 
-# 🔐 安全配置
+# 🔐 Security config
 jwt.secret=${JWT_SECRET:weblog-dev-secret-key-change-in-production}
 cors.allowed-origins=${CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
 
-# ☁️ AWS配置 (生产环境)
+# ☁️ AWS config (production)
 aws.s3.bucket=${S3_BUCKET:}
 aws.cloudfront.domain=${CLOUDFRONT_DOMAIN:}
 ```
 
-**关键特性：**
+**Key Features:**
 
-- 🎯 **默认值回退**：开发友好的默认配置
-- 🔄 **环境变量优先**：生产环境变量覆盖默认值
-- 📊 **配置验证**：启动时验证必需配置
-- 🔍 **调试支持**：可控的日志级别
+- 🎯 **Default fallback**: Dev-friendly defaults
+- 🔄 **Env var priority**: Production env vars override defaults
+- 📊 **Config validation**: Required config checked at startup
+- 🔍 **Debug support**: Controllable log levels
 
-### **2. Docker 环境配置 (`compose.yaml`)**
+### **2. Docker Environment Config (`compose.yaml`)**
 
 ```yaml
 services:
@@ -127,17 +127,17 @@ services:
       - JWT_SECRET=${JWT_SECRET:-weblog-dev-secret-key}
       - SHOW_SQL=${SHOW_SQL:-true}
     volumes:
-      - ./:/app # 🔥 热重载
+      - ./:/app # 🔥 Hot reload
 ```
 
-**企业级特性：**
+**Enterprise Features:**
 
-- 🎛️ **配置外部化**：所有设置都可通过环境变量控制
-- 🔧 **开发优化**：默认启用调试和热重载
-- 📊 **健康检查**：内置应用健康监控
-- 🔒 **安全隔离**：非 root 用户运行
+- 🎛️ **Externalized config**: All settings controllable via env vars
+- 🔧 **Dev optimized**: Debug/hot reload enabled by default
+- 📊 **Health checks**: Built-in app health monitoring
+- 🔒 **Security isolation**: Non-root user runs app
 
-### **3. 前端环境配置 (`api.ts`)**
+### **3. Frontend Env Config (`api.ts`)**
 
 ```typescript
 const ENV_CONFIG = {
@@ -158,36 +158,36 @@ const ENV_CONFIG = {
 };
 ```
 
-**智能特性：**
+**Smart Features:**
 
-- 🎯 **环境自动检测**：开发/生产环境自动切换
-- 🔧 **功能开关**：可控的调试和特性开关
-- 🌐 **API 路由智能**：自动选择正确的后端端点
+- 🎯 **Auto environment detection**: Switches dev/prod automatically
+- 🔧 **Feature toggles**: Debug and feature flags
+- 🌐 **Smart API routing**: Auto-selects correct backend endpoint
 
-## 🚀 **部署流程对比**
+## 🚀 **Deployment Workflow Comparison**
 
-### **本地开发工作流**
+### **Local Dev Workflow**
 
 ```bash
-# 1️⃣ 一键启动完整环境
+# 1️⃣ One-click full environment startup
 cd WeBlog_backend
 docker-compose up
 
-# 2️⃣ 应用自动启动：
-# ✅ PostgreSQL数据库 (端口5432)
-# ✅ Spring Boot应用 (端口8080，热重载)
-# ✅ pgAdmin管理界面 (端口5050)
-# ✅ 测试数据自动初始化
+# 2️⃣ App auto-starts:
+# ✅ PostgreSQL DB (port 5432)
+# ✅ Spring Boot app (port 8080, hot reload)
+# ✅ pgAdmin UI (port 5050)
+# ✅ Test data auto-init
 
-# 3️⃣ 前端开发
+# 3️⃣ Frontend dev
 cd WeBlog-frontend
-npm run dev  # 端口5173，连接本地后端
+npm run dev  # port 5173, connects to local backend
 ```
 
-### **生产部署工作流**
+### **Production Deployment Workflow**
 
 ```bash
-# 1️⃣ 设置生产环境变量
+# 1️⃣ Set production env vars
 export ENV=production
 export DB_HOST=your-rds-endpoint.amazonaws.com
 export DB_USERNAME=weblog_prod
@@ -196,78 +196,78 @@ export JWT_SECRET=256_bit_production_key
 export S3_BUCKET=weblog-prod-assets
 export CLOUDFRONT_DOMAIN=cdn.weblog.com
 
-# 2️⃣ 执行自动化部署
+# 2️⃣ Run automated deployment
 ./deploy-production.sh
 
-# 3️⃣ 部署流程：
-# ✅ 构建优化的生产Docker镜像
-# ✅ 前端构建并上传到S3
-# ✅ 部署到EC2实例
-# ✅ 健康检查验证
-# ✅ CloudFront缓存刷新
+# 3️⃣ Deployment steps:
+# ✅ Build optimized production Docker image
+# ✅ Build frontend and upload to S3
+# ✅ Deploy to EC2 instance
+# ✅ Health check validation
+# ✅ CloudFront cache invalidation
 ```
 
-## 🔐 **企业级安全措施**
+## 🔐 **Enterprise Security Measures**
 
-### **密钥管理层级**
+### **Secret Management Levels**
 
 ```yaml
-Level 1 - 开发环境:
-  Storage: .env文件 (Git忽略)
-  Security: 开发专用假密钥
-  Access: 本地开发者
+Level 1 - Dev:
+  Storage: .env file (gitignored)
+  Security: Dev-only fake keys
+  Access: Local devs
 
-Level 2 - 测试环境:
-  Storage: CI/CD环境变量
-  Security: 测试专用密钥
-  Access: 自动化系统
+Level 2 - Test:
+  Storage: CI/CD env vars
+  Security: Test-only keys
+  Access: Automation systems
 
-Level 3 - 生产环境:
+Level 3 - Production:
   Storage: AWS Secrets Manager
-  Security: 企业级加密 + 自动轮换
-  Access: 授权DevOps人员 + MFA
+  Security: Enterprise encryption + auto-rotation
+  Access: Authorized DevOps + MFA
 ```
 
-### **密钥轮换策略**
+### **Secret Rotation Strategy**
 
 ```bash
-# 🔄 自动轮换流程
+# 🔄 Auto-rotation flow
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Lambda触发    │───▶│   生成新密钥    │───▶│   更新Secrets   │
-│  (定时/手动)    │    │  (256位随机)    │    │    Manager     │
+│   Lambda Trigger│───▶│   Generate Key  │───▶│   Update Secrets│
+│ (Scheduled/Manual)│   │  (256-bit rand) │   │    Manager      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
           │                                              │
           ▼                                              ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   验证部署      │◀───│   应用重启      │◀───│   通知应用      │
-│   健康状态      │    │  (滚动更新)     │    │   (EventBridge)  │
+│   Validate Deploy│◀──│   App Restart   │◀──│   Notify App     │
+│   Health Status │   │  (Rolling update)│   │   (EventBridge)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 📊 **监控与可观测性**
+## 📊 **Monitoring & Observability**
 
-### **环境健康监控**
+### **Environment Health Monitoring**
 
 ```yaml
-监控维度:
-  应用健康: /actuator/health
-  数据库连接: 连接池状态
-  密钥访问: CloudTrail日志
-  环境变量: 启动时验证
+Monitored Dimensions:
+  App health: /actuator/health
+  DB connection: Pool status
+  Secret access: CloudTrail logs
+  Env vars: Checked at startup
 
-告警设置:
-  应用下线: 立即通知
-  密钥异常访问: 安全团队
-  环境变量缺失: 部署失败
-  性能异常: 自动扩缩容
+Alerting:
+  App down: Immediate notification
+  Secret access anomaly: Security team
+  Missing env vars: Deploy fails
+  Performance anomaly: Auto scaling
 ```
 
-### **配置漂移检测**
+### **Config Drift Detection**
 
 ```bash
-# 🔍 配置一致性检查
+# 🔍 Config consistency check
 check_config_drift() {
-    # 比较实际配置与期望配置
+    # Compare actual config with expected baseline
     local expected_config="config-baseline.json"
     local actual_config=$(curl -s http://localhost:8080/actuator/configprops)
 
@@ -277,112 +277,112 @@ check_config_drift() {
 }
 ```
 
-## 🎓 **最佳实践总结**
+## 🎓 **Best Practice Summary**
 
-### **✅ Do's (推荐做法)**
+### **✅ Do's (Recommended)**
 
-1. **配置外部化**
+1. **Externalize config**
 
    ```bash
-   # ✅ 正确：使用环境变量
+   # ✅ Correct: Use env vars
    spring.datasource.password=${DB_PASSWORD}
 
-   # ❌ 错误：硬编码
+   # ❌ Wrong: Hardcoded
    spring.datasource.password=hardcoded123
    ```
 
-2. **环境特定配置**
+2. **Environment-specific config**
 
    ```properties
-   # ✅ 正确：环境特定的Profile
+   # ✅ Correct: Env-specific profile
    spring.profiles.active=${ENV:local}
 
-   # ❌ 错误：单一配置文件
-   spring.profiles.active=prod  # 固定值
+   # ❌ Wrong: Single config file
+   spring.profiles.active=prod  # Fixed value
    ```
 
-3. **安全默认值**
+3. **Secure defaults**
 
    ```properties
-   # ✅ 正确：安全的开发默认值
+   # ✅ Correct: Secure dev default
    jwt.secret=${JWT_SECRET:dev-secret-change-in-prod}
 
-   # ❌ 错误：生产密钥作为默认值
+   # ❌ Wrong: Production secret as default
    jwt.secret=${JWT_SECRET:prod-secret-exposed}
    ```
 
-### **❌ Don'ts (避免做法)**
+### **❌ Don'ts (To Avoid)**
 
-1. **❌ 永远不要提交密钥到代码库**
-2. **❌ 避免在多个地方重复配置**
-3. **❌ 不要在日志中输出敏感信息**
-4. **❌ 避免生产配置与开发配置混用**
+1. **❌ Never commit secrets to codebase**
+2. **❌ Avoid duplicate config in multiple places**
+3. **❌ Never log sensitive info**
+4. **❌ Don't mix prod/dev configs**
 
-## 🎯 **实施路线图**
+## 🎯 **Implementation Roadmap**
 
-### **Phase 1: 基础设施 (已完成)**
+### **Phase 1: Infrastructure (Done)**
 
-- ✅ 环境变量化配置文件
-- ✅ Docker 多环境支持
-- ✅ 基础部署脚本
+- ✅ Env-var driven config files
+- ✅ Docker multi-env support
+- ✅ Basic deploy scripts
 
-### **Phase 2: 安全强化**
+### **Phase 2: Security Hardening**
 
-- 🔄 AWS Secrets Manager 集成
-- 🔄 自动密钥轮换
-- 🔄 访问控制和审计
+- 🔄 AWS Secrets Manager integration
+- 🔄 Auto secret rotation
+- 🔄 Access control & audit
 
-### **Phase 3: 自动化增强**
+### **Phase 3: Automation Enhancement**
 
-- 📋 CI/CD 流水线完善
-- 📋 蓝绿部署实现
-- 📋 监控告警体系
+- 📋 CI/CD pipeline improvement
+- 📋 Blue/green deployment
+- 📋 Monitoring & alerting system
 
-### **Phase 4: 运维优化**
+### **Phase 4: Ops Optimization**
 
-- 📋 配置漂移检测
-- 📋 自动扩缩容
-- 📋 灾难恢复机制
+- 📋 Config drift detection
+- 📋 Auto scaling
+- 📋 Disaster recovery
 
-## 🎉 **成果展示**
+## 🎉 **Results Showcase**
 
-### **开发体验提升**
+### **Dev Experience Improvement**
 
-| 指标         | 优化前 | 优化后 | 提升   |
-| ------------ | ------ | ------ | ------ |
-| 环境启动时间 | 5 分钟 | 1 分钟 | 80% ⬇️ |
-| 配置错误率   | 30%    | <5%    | 83% ⬇️ |
-| 环境一致性   | 60%    | 95%    | 35% ⬆️ |
-| 部署成功率   | 70%    | 95%    | 25% ⬆️ |
+| Metric          | Before | After | Improvement |
+| --------------- | ------ | ----- | ----------- |
+| Env startup     | 5 min  | 1 min | 80% ⬇️      |
+| Config errors   | 30%    | <5%   | 83% ⬇️      |
+| Env consistency | 60%    | 95%   | 35% ⬆️      |
+| Deploy success  | 70%    | 95%   | 25% ⬆️      |
 
-### **运维效率提升**
+### **Ops Efficiency Gains**
 
-- 🚀 **零停机部署**：滚动更新策略
-- 🔄 **自动化程度**：95%的操作自动化
-- 🛡️ **安全合规**：企业级密钥管理
-- 📊 **可观测性**：全链路监控覆盖
+- 🚀 **Zero-downtime deploy**: Rolling update
+- 🔄 **Automation**: 95% of ops automated
+- 🛡️ **Security compliance**: Enterprise-grade secret mgmt
+- 📊 **Observability**: Full-stack monitoring
 
-## 💡 **企业应用案例**
+## 💡 **Enterprise Use Cases**
 
-### **大型互联网公司标准**
+### **Large Internet Company Standards**
 
 ```yaml
-Netflix模式:
-  - 微服务架构 + 配置中心
-  - 动态配置热更新
-  - 混沌工程验证
+Netflix model:
+  - Microservices + config center
+  - Dynamic config hot reload
+  - Chaos engineering validation
 
-Google模式:
-  - 基础设施即代码
-  - 自动化测试覆盖
-  - SRE运维模式
+Google model:
+  - Infra as code
+  - Automated test coverage
+  - SRE ops model
 
-Amazon模式:
-  - 服务网格治理
-  - 多可用区部署
-  - 成本优化自动化
+Amazon model:
+  - Service mesh governance
+  - Multi-AZ deployment
+  - Cost optimization automation
 ```
 
-这套环境配置管理体系让你的应用具备了**企业级的稳定性、安全性和可扩展性**，实现了真正的"**写一次，到处运行**"的现代化部署模式。
+This environment config management system gives your app **enterprise-grade stability, security, and scalability**, achieving true "**write once, run anywhere**" modern deployment.
 
-🎯 **现在你可以自信地说：我的应用已经达到了企业级标准！**
+🎯 **Now you can confidently say: My app is enterprise-ready!**

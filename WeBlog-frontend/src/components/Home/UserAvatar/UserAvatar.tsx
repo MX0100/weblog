@@ -74,7 +74,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
             {currentUser.relationshipStatus === "SINGLE"
               ? "Single"
               : `In a relationship${
-                  currentUser.partnerId ? ` (ID: ${currentUser.partnerId})` : ""
+                  currentUser.nickname ? ` (with: ${currentUser.nickname})` : ""
                 }`}
           </span>
         </div>
