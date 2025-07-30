@@ -8,6 +8,7 @@ import lombok.Data;
  * 
  * @param <T> data type
  * @author mx0100
+ * enne
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
