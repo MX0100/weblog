@@ -14,7 +14,7 @@ env:
 
 jobs:
   # ======================================
-  # 前端测试
+  # Frontend Tests
   # ======================================
   test-frontend:
     name: 🌐 Frontend Tests
@@ -54,7 +54,7 @@ jobs:
           flags: frontend
 
   # ======================================
-  # 后端测试
+  # Backend Tests
   # ======================================
   test-backend:
     name: ☕ Backend Tests
@@ -62,7 +62,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
+        image: postgres:15
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test

@@ -8,7 +8,7 @@ on:
       environment:
         description: "部署环境 (dev/staging/prod)"
         required: false
-        default: "prod"
+        default: "dev"
 
 env:
   # 统一环境控制
@@ -16,12 +16,12 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION || 'us-west-2' }}
   S3_BUCKET: ${{ secrets.S3_BUCKET }}
   CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
-  # 数据库与应用密钥（请在 Repo Secrets 配置以下值）
-  DB_HOST: ${{ secrets.PROD_DB_HOST }}
-  DB_NAME: ${{ secrets.PROD_DB_NAME }}
-  DB_USERNAME: ${{ secrets.PROD_DB_USERNAME }}
-  DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
-  JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
+  # 数据库与应用密钥（请在 Repo Secrets 配置以下值；使用无环境前缀的通用命名）
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_USERNAME: ${{ secrets.DB_USERNAME }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:
   # ======================================
@@ -57,6 +57,9 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔎 Who am I (AWS caller identity)
+        run: aws sts get-caller-identity | cat
 
       - name: 🔑 Login to Docker Hub
         uses: docker/login-action@v3
@@ -177,6 +180,9 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔎 Who am I (AWS caller identity)
+        run: aws sts get-caller-identity | cat
 
       - name: 📦 Install dependencies
         working-directory: WeBlog-frontend
