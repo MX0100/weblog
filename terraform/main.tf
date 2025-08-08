@@ -37,12 +37,13 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# 随机密码生成
+# 随机密码生成 - 简化版本，避免复杂特殊字符
 resource "random_password" "db_password" {
   length  = 16
-  special = true
-  # 排除RDS不允许的字符: '/', '@', '"', ' ' (空格)
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  special = false  # 暂时禁用特殊字符
+  upper   = true
+  lower   = true
+  numeric = true
 }
 
 # VPC
@@ -408,7 +409,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     max_ttl                = 0
   }
 
-  # Cache behavior for WebSocket and other backend endpoints
+  # Cache behavior for WebSocket connections
   ordered_cache_behavior {
     path_pattern     = "/ws/*"
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -442,7 +443,6 @@ resource "aws_cloudfront_distribution" "frontend" {
         forward = "none"
       }
     }
-
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 0

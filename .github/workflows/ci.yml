@@ -128,7 +128,7 @@ jobs:
           flags: backend
 
   # ======================================
-  # 集成测试
+  # Integration Tests
   # ======================================
   integration-test:
     name: 🔗 Integration Tests
@@ -222,7 +222,7 @@ jobs:
           fi
 
   # ======================================
-  # 安全扫描
+  # Security Scan
   # ======================================
   security-scan:
     name: 🔒 Security Scan
@@ -254,7 +254,7 @@ jobs:
           format: "HTML"
 
   # ======================================
-  # 代码质量检查
+  # Code Quality
   # ======================================
   code-quality:
     name: 📊 Code Quality
@@ -299,7 +299,7 @@ jobs:
         run: ./gradlew sonarqube --info
 
   # ======================================
-  # 构建镜像
+  # Build Images
   # ======================================
   build-images:
     name: 🐳 Build Images

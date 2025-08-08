@@ -6,17 +6,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "部署环境 (dev/staging/prod)"
+        description: "Environment (dev/staging/prod)"
         required: false
         default: "dev"
 
 env:
-  # 统一环境控制
-  ENVIRONMENT: ${{ github.event.inputs.environment || 'prod' }}
+  # Global environment
+  ENVIRONMENT: dev
   AWS_REGION: ${{ secrets.AWS_REGION || 'us-west-2' }}
   S3_BUCKET: ${{ secrets.S3_BUCKET }}
   CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
-  # 数据库与应用密钥（请在 Repo Secrets 配置以下值；使用无环境前缀的通用命名）
+  # Database and app secrets
   DB_HOST: ${{ secrets.DB_HOST }}
   DB_NAME: ${{ secrets.DB_NAME }}
   DB_USERNAME: ${{ secrets.DB_USERNAME }}
@@ -25,7 +25,7 @@ env:
 
 jobs:
   # ======================================
-  # 构建和推送后端Docker镜像
+  # Build and push backend Docker image
   # ======================================
   deploy-backend:
     name: ☕ Deploy Backend
@@ -58,9 +58,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: 🔎 Who am I (AWS caller identity)
-        run: aws sts get-caller-identity | cat
-
       - name: 🔑 Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -79,82 +76,82 @@ jobs:
       - name: 🐳 Build and push Docker image
         working-directory: WeBlog_backend
         run: |
-          # 构建多标签镜像 (移除时间戳标签，简化流程)
+          # Build multi-tag image
           docker build -f Dockerfile \
             -t mx0100/weblog-backend:latest \
             -t mx0100/weblog-backend:${{ github.sha }} \
             .
 
-          # 推送所有标签
+          # Push all tags
           docker push mx0100/weblog-backend:latest
           docker push mx0100/weblog-backend:${{ github.sha }}
 
       - name: 🔄 Deploy to EC2 via SSM
         run: |
-          echo "🚀 开始部署后端到EC2..."
+          echo "🚀 Start deploying backend to EC2..."
 
-          # 获取EC2实例ID
+          # Get EC2 instance ID (dev)
           INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=weblog-${{ env.ENVIRONMENT }}-web-server" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=weblog-dev-web-server" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
 
-          echo "📍 目标实例: $INSTANCE_ID"
+          echo "📍 Target instance: $INSTANCE_ID"
 
           if [ "$INSTANCE_ID" = "None" ] || [ -z "$INSTANCE_ID" ]; then
-            echo "❌ 未找到匹配的EC2实例 (tag: weblog-${{ env.ENVIRONMENT }}-web-server)"
+            echo "❌ No matching EC2 instance (tag: weblog-dev-web-server)"
             exit 1
           fi
 
-          # 通过SSM执行部署命令：在EC2上规范化docker-compose文件并注入最新环境变量
+          # Use SSM to update docker-compose on EC2 and inject env vars
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids $INSTANCE_ID \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
-              "echo \"🔄 开始更新应用...\"",
+              "echo \"🔄 Start updating application...\"",
               "cd /opt/weblog",
-              "echo \"📝 生成标准化 docker-compose.prod.yml...\"",
+              "echo \"📝 Generate standard docker-compose.prod.yml...\"",
               "bash -lc \"cat > docker-compose.prod.yml << 'EOF'\nversion: '3.8'\n\nservices:\n  weblog-backend:\n    image: mx0100/weblog-backend:latest\n    container_name: weblog-backend\n    ports:\n      - '8080:8080'\n    environment:\n      - SPRING_PROFILES_ACTIVE=prod\n      - DB_HOST=\\${DB_HOST}\n      - DB_NAME=\\${DB_NAME}\n      - DB_USERNAME=\\${DB_USERNAME}\n      - DB_PASSWORD=\\${DB_PASSWORD}\n      - JWT_SECRET=\\${JWT_SECRET}\n      - CORS_ORIGINS=\\${CORS_ORIGINS}\n      - JAVA_OPTS=-Xms256m -Xmx512m -Dspring.devtools.restart.enabled=false\n    restart: unless-stopped\n    healthcheck:\n      test: ['CMD', 'curl', '-f', 'http://localhost:8080/actuator/health']\n      interval: 30s\n      timeout: 10s\n      retries: 3\n      start_period: 60s\n    logging:\n      driver: 'awslogs'\n      options:\n        awslogs-group: '/aws/ec2/weblog-${{ env.ENVIRONMENT }}'\n        awslogs-region: '${{ env.AWS_REGION }}'\n        awslogs-stream: 'weblog-backend'\nEOF\"",
-              "echo \"🔧 设置运行时环境变量...\"",
+              "echo \"🔧 Set runtime environment variables...\"",
               "export DB_HOST=${{ env.DB_HOST }}",
               "export DB_NAME=${{ env.DB_NAME }}",
               "export DB_USERNAME=${{ env.DB_USERNAME }}",
               "export DB_PASSWORD=${{ env.DB_PASSWORD }}",
               "export JWT_SECRET=${{ env.JWT_SECRET }}",
               "export CORS_ORIGINS=https://${{ env.CLOUDFRONT_DOMAIN }}",
-              "echo \"📥 拉取最新镜像...\"",
+              "echo \"📥 Pull latest image...\"",
               "docker-compose -f docker-compose.prod.yml pull",
-              "echo \"🔄 重启应用容器...\"",
+              "echo \"🔄 Restart application containers...\"",
               "docker-compose -f docker-compose.prod.yml up -d --force-recreate",
-              "echo \"⏳ 等待应用启动...\"",
+              "echo \"⏳ Wait for application to start...\"",
               "sleep 30",
-              "echo \"✅ 应用更新完成\"",
+              "echo \"✅ Application update completed\"",
               "docker ps | grep weblog-backend || true",
-              "echo \"🔍 检查应用日志...\"",
+              "echo \"🔍 Check application logs...\"",
               "docker logs weblog-backend --tail 50 2>&1 || echo No logs available"
             ]' \
             --query "Command.CommandId" \
             --output text)
 
-          echo "📝 命令ID: $COMMAND_ID"
+          echo "📝 Command ID: $COMMAND_ID"
 
-          # 等待命令执行完成
-          echo "⏳ 等待部署完成..."
+          # Wait for command to complete
+          echo "⏳ Waiting for deployment to finish..."
           aws ssm wait command-executed \
             --command-id $COMMAND_ID \
             --instance-id $INSTANCE_ID
 
-          # 获取执行结果
+          # Get command output
           aws ssm get-command-invocation \
             --command-id $COMMAND_ID \
             --instance-id $INSTANCE_ID \
             --query "StandardOutputContent" \
             --output text
 
-          echo "🎉 后端部署完成！"
+          echo "🎉 Backend deployment completed!"
 
   # ======================================
-  # 构建和部署前端到S3
+  # Build and deploy frontend to S3
   # ======================================
   deploy-frontend:
     name: 🌐 Deploy Frontend
@@ -181,48 +178,45 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: 🔎 Who am I (AWS caller identity)
-        run: aws sts get-caller-identity | cat
-
       - name: 📦 Install dependencies
         working-directory: WeBlog-frontend
         run: npm ci
 
-      - name: 🏗️ Build frontend for production
+      - name: 🏗️ Build frontend
         working-directory: WeBlog-frontend
         env:
           VITE_API_BASE_URL: https://${{ env.CLOUDFRONT_DOMAIN }}
           VITE_WS_URL: wss://${{ env.CLOUDFRONT_DOMAIN }}/ws
-          VITE_ENV_NAME: production
+          VITE_ENV_NAME: dev
         run: |
-          echo "🏗️ 构建生产环境前端..."
-          echo "API地址: $VITE_API_BASE_URL"
-          echo "WebSocket地址: $VITE_WS_URL"
+          echo "🏗️ Build frontend..."
+          echo "API: $VITE_API_BASE_URL"
+          echo "WebSocket: $VITE_WS_URL"
           npm run build
 
       - name: 🚀 Deploy to S3
         working-directory: WeBlog-frontend
         run: |
-          echo "📤 上传前端文件到S3..."
-          if [ -z "${{ env.S3_BUCKET }}" ]; then echo "❌ S3_BUCKET 未配置为仓库机密"; exit 1; fi
+          echo "📤 Upload frontend assets to S3..."
+          if [ -z "${{ env.S3_BUCKET }}" ]; then echo "❌ S3_BUCKET secret is not set"; exit 1; fi
           aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ \
             --delete \
             --cache-control "public,max-age=31536000" \
             --exclude "*.html" \
             --exclude "*.json"
 
-          # HTML文件单独处理（不缓存）
+          # Sync HTML/JSON without cache
           aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ \
             --cache-control "no-cache" \
             --include "*.html" \
             --include "*.json"
 
-          echo "✅ 前端文件上传完成！"
+          echo "✅ Frontend files uploaded!"
 
       - name: 🔄 Invalidate CloudFront cache
         run: |
-          echo "🔄 清除CloudFront缓存..."
-          if [ -z "${{ env.CLOUDFRONT_DOMAIN }}" ]; then echo "❌ CLOUDFRONT_DOMAIN 未配置为仓库机密"; exit 1; fi
+          echo "🔄 Invalidate CloudFront cache..."
+          if [ -z "${{ env.CLOUDFRONT_DOMAIN }}" ]; then echo "❌ CLOUDFRONT_DOMAIN secret is not set"; exit 1; fi
           DISTRIBUTION_ID=$(aws cloudfront list-distributions \
             --query "DistributionList.Items[?DomainName=='${{ env.CLOUDFRONT_DOMAIN }}'].Id | [0]" \
             --output text)
@@ -234,14 +228,14 @@ jobs:
               --query "Invalidation.Id" \
               --output text)
             
-            echo "🔄 缓存清除ID: $INVALIDATION_ID"
-            echo "✅ CloudFront缓存清除完成！"
+            echo "🔄 Invalidation ID: $INVALIDATION_ID"
+            echo "✅ CloudFront invalidation completed!"
           else
-            echo "⚠️ 未找到CloudFront分发"
+            echo "⚠️ CloudFront distribution not found"
           fi
 
   # ======================================
-  # 健康检查和验证
+  # Health checks and validation
   # ======================================
   health-check:
     name: 🔍 Health Check
@@ -253,60 +247,60 @@ jobs:
     steps:
       - name: ⏳ Wait for deployment stabilization
         run: |
-          echo "⏳ 等待部署稳定（60秒）..."
+          echo "⏳ Wait for stabilization (60s)..."
           sleep 60
 
       - name: 🔍 Check backend health
         run: |
-          echo "🔍 检查后端健康状态..."
+          echo "🔍 Checking backend health..."
           BACKEND_URL="https://${{ env.CLOUDFRONT_DOMAIN }}/actuator/health"
 
           for i in {1..10}; do
-            echo "🔍 健康检查尝试 $i/10..."
+            echo "🔍 Health check attempt $i/10..."
             
             if curl -f -s $BACKEND_URL | grep -q "UP"; then
-              echo "✅ 后端健康检查通过！"
+              echo "✅ Backend health check passed!"
               (curl -s $BACKEND_URL | jq '.' ) || curl -s $BACKEND_URL || true
               break
             fi
             
             if [ $i -eq 10 ]; then
-              echo "❌ 后端健康检查失败"
+              echo "❌ Backend health check failed"
               exit 1
             fi
             
-            echo "⏳ 等待30秒后重试..."
+            echo "⏳ Retry after 30s..."
             sleep 30
           done
 
       - name: 🔍 Check frontend accessibility
         run: |
-          echo "🔍 检查前端可访问性..."
+          echo "🔍 Checking frontend accessibility..."
           FRONTEND_URL="https://${{ env.CLOUDFRONT_DOMAIN }}"
 
           if curl -f -s $FRONTEND_URL > /dev/null; then
-            echo "✅ 前端访问正常！"
-            echo "🌐 前端地址: $FRONTEND_URL"
+            echo "✅ Frontend is accessible!"
+            echo "🌐 Frontend URL: $FRONTEND_URL"
           else
-            echo "❌ 前端访问失败"
+            echo "❌ Frontend access failed"
             exit 1
           fi
 
       - name: 🎉 Deployment summary
         run: |
-          echo "🎉 部署完成摘要："
+          echo "🎉 Deployment summary:"
           echo "================================"
-          echo "🌐 前端地址: https://${{ env.CLOUDFRONT_DOMAIN }}"
-          echo "🔧 后端API: https://${{ env.CLOUDFRONT_DOMAIN }}/api"
-          echo "💓 健康检查: https://${{ env.CLOUDFRONT_DOMAIN }}/actuator/health"
+          echo "🌐 Frontend: https://${{ env.CLOUDFRONT_DOMAIN }}"
+          echo "🔧 Backend API: https://${{ env.CLOUDFRONT_DOMAIN }}/api"
+          echo "💓 Health: https://${{ env.CLOUDFRONT_DOMAIN }}/actuator/health"
           echo "🔌 WebSocket: wss://${{ env.CLOUDFRONT_DOMAIN }}/ws/notifications"
           echo "🚀 部署时间: $(date)"
           echo "📝 Git提交: ${{ github.sha }}"
           echo "================================"
-          echo "✅ 所有服务运行正常！"
+          echo "✅ All services are running!"
 
   # ======================================
-  # 通知（可选）
+  # Notification (optional)
   # ======================================
   notify:
     name: 📢 Notification
@@ -317,28 +311,28 @@ jobs:
     steps:
       - name: 📢 Deployment notification
         run: |
-          # 检查所有关键步骤的状态
+          # Summarize job results
           BACKEND_STATUS="${{ needs.deploy-backend.result }}"
           FRONTEND_STATUS="${{ needs.deploy-frontend.result }}"
           HEALTH_STATUS="${{ needs.health-check.result }}"
 
-          echo "🔍 部署状态检查："
-          echo "后端部署: $BACKEND_STATUS"
-          echo "前端部署: $FRONTEND_STATUS"  
-          echo "健康检查: $HEALTH_STATUS"
+          echo "🔍 Deployment results:"
+          echo "Backend: $BACKEND_STATUS"
+          echo "Frontend: $FRONTEND_STATUS"  
+          echo "Health: $HEALTH_STATUS"
 
           # 如果所有关键步骤都成功
           if [ "$BACKEND_STATUS" == "success" ] && [ "$FRONTEND_STATUS" == "success" ] && [ "$HEALTH_STATUS" == "success" ]; then
-            echo "🎉 生产环境部署成功！"
-          echo "🌐 应用地址: https://${{ env.CLOUDFRONT_DOMAIN }}"
-            echo "⏰ 部署时间: $(date)"
-            echo "📝 Git提交: ${{ github.sha }}"
+            echo "🎉 Deployment succeeded!"
+            echo "🌐 URL: https://${{ env.CLOUDFRONT_DOMAIN }}"
+            echo "⏰ Time: $(date)"
+            echo "📝 Commit: ${{ github.sha }}"
           else
-            echo "❌ 部署失败，详细信息："
-            echo "  - 后端部署状态: $BACKEND_STATUS"
-            echo "  - 前端部署状态: $FRONTEND_STATUS"
-            echo "  - 健康检查状态: $HEALTH_STATUS"
+            echo "❌ Deployment failed:"
+            echo "  - Backend: $BACKEND_STATUS"
+            echo "  - Frontend: $FRONTEND_STATUS"
+            echo "  - Health: $HEALTH_STATUS"
             echo ""
-            echo "请检查失败的步骤日志进行排查"
+            echo "Please check logs for failed steps"
             exit 1
           fi
