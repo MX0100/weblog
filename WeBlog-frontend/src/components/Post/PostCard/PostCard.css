@@ -1,18 +1,18 @@
 /* PostCard Component Styles */
 .post-card {
-  background: white;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e6eef7;
+  border-radius: 14px;
   padding: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(17, 41, 75, 0.08);
 }
 
 .post-card:hover {
-  border-color: #007bff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
-  transform: translateY(-1px);
+  border-color: #b7cff0;
+  box-shadow: 0 10px 24px rgba(17, 41, 75, 0.12);
+  transform: translateY(-2px);
 }
 
 /* Post Header */

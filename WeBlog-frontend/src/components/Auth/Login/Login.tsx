@@ -4,6 +4,7 @@ import { userAPI } from "../../../services/api";
 import { login } from "../../../utils/auth";
 import type { LoginRequest } from "../../../types/api";
 import "./Login.css";
+import PublicNavbar from "../../common/PublicNavbar/PublicNavbar";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -48,69 +49,72 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2 className="auth-title">Welcome Back</h2>
-        <p className="auth-subtitle">Sign in to WeBlog</p>
+    <div className="auth-page">
+      <PublicNavbar />
+      <div className="auth-container">
+        <div className="auth-card">
+          <h2 className="auth-title">Welcome Back</h2>
+          <p className="auth-subtitle">Sign in to WeBlog</p>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="username" className="form-label">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Enter your username"
-              required
-            />
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="username" className="form-label">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Enter your username"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            {error && <div className="error-message">{error}</div>}
+
+            <button
+              type="submit"
+              className="btn btn-primary auth-submit-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="loading-text">
+                  <span className="spinner"></span>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign In"
+              )}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p>
+              Don't have an account?{" "}
+              <Link to="/register" className="auth-link">
+                Sign up now
+              </Link>
+            </p>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          {error && <div className="error-message">{error}</div>}
-
-          <button
-            type="submit"
-            className="btn btn-primary auth-submit-btn"
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="loading-text">
-                <span className="spinner"></span>
-                Signing in...
-              </span>
-            ) : (
-              "Sign In"
-            )}
-          </button>
-        </form>
-
-        <div className="auth-footer">
-          <p>
-            Don't have an account?{" "}
-            <Link to="/register" className="auth-link">
-              Sign up now
-            </Link>
-          </p>
         </div>
       </div>
     </div>

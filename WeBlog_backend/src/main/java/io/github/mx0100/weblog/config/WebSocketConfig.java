@@ -25,6 +25,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(webSocketHandler, "/ws/notifications")
                 .addInterceptors(authInterceptor)
-                .setAllowedOrigins("https://dcyz06osekbqs.cloudfront.net","http://localhost:5173");
+                .setAllowedOrigins(
+                        "https://dcyz06osekbqs.cloudfront.net",
+                        "http://localhost:5173",
+                        "http://127.0.0.1:5173",
+                        "http://localhost:3000",
+                        "http://127.0.0.1:3000"
+                );
     }
 } 

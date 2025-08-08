@@ -6,6 +6,13 @@
   --primary-color: #4f46e5;
   --primary-color-light: #c7d2fe;
   --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Page gradient (light blue top -> white bottom) */
+  --page-gradient: radial-gradient(
+      1200px 600px at 50% -100px,
+      #8ed0ff33,
+      transparent
+    ),
+    linear-gradient(180deg, #e7f4ff 0%, #ffffff 70%);
 
   /* Background Colors */
   --background-primary: #ffffff;
@@ -51,7 +58,7 @@
 
 body {
   font-family: "Inter", sans-serif;
-  background-color: var(--background-secondary);
+  background: var(--page-gradient);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -265,7 +272,7 @@ h6 {
 
 .modal-content {
   background: white;
-  border-radius: 8px;
+  border-radius: 16px;
   max-width: 90%;
   max-height: 90%;
   overflow: auto;

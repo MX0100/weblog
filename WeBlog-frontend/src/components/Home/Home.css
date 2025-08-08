@@ -1,7 +1,7 @@
 /* Home Component Styles */
 .home-container {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background: var(--page-gradient);
 }
 
 /* Main Content */
@@ -16,9 +16,9 @@
 }
 
 .content-wrapper {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(17, 41, 75, 0.12);
   overflow: hidden;
 }
 
@@ -62,9 +62,9 @@
 
 /* Create Post Form */
 .create-post-form {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
+  background: #fbfdff;
+  border: 1px solid #e6eef7;
+  border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }

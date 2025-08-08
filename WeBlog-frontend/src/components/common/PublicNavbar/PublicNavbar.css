@@ -1,0 +1,6 @@
+@import url("../../Landing/Landing.css");
+
+/* share the same look as landing navbar */
+.landing-navbar .nav-links a.active {
+  color: #0d7bd6;
+}

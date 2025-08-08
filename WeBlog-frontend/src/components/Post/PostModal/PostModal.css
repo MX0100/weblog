@@ -24,7 +24,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* 移除边框，避免顶部圆角出现未填充的1px浅色边 */
+  border: none;
   animation: modalSlideIn 0.3s ease-out;
 }
 
@@ -48,10 +49,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1.25rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-radius: 20px 20px 0 0;
   position: relative;
 }
 
@@ -68,6 +68,7 @@
     rgba(255, 255, 255, 0.05) 100%
   );
   pointer-events: none;
+  border-radius: inherit;
 }
 
 .modal-header h3 {
@@ -86,18 +87,21 @@
 }
 
 .modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   cursor: pointer;
   padding: 0;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 10px;
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
 }
@@ -258,35 +262,35 @@
   gap: 0.5rem;
 }
 
-.btn-secondary {
+.post-modal .btn-secondary {
   background: linear-gradient(135deg, #6c757d, #5a6268);
   color: white;
   box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
 }
 
-.btn-secondary::before {
+.post-modal .btn-secondary::before {
   content: "✏️";
   font-size: 0.8rem;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.post-modal .btn-secondary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
   background: linear-gradient(135deg, #5a6268, #495057);
 }
 
-.btn-danger {
+.post-modal .btn-danger {
   background: linear-gradient(135deg, #dc3545, #c82333);
   color: white;
   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
-.btn-danger::before {
+.post-modal .btn-danger::before {
   content: "🗑️";
   font-size: 0.8rem;
 }
 
-.btn-danger:hover:not(:disabled) {
+.post-modal .btn-danger:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
   background: linear-gradient(135deg, #c82333, #bd2130);

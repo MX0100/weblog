@@ -9,6 +9,7 @@ import { isAuthenticated } from "./utils/auth";
 import Login from "./components/Auth/Login/Login";
 import Register from "./components/Auth/Register/Register";
 import Home from "./components/Home/Home";
+import Landing from "./components/Landing/Landing";
 import "./styles/global.css";
 
 // Private route component
@@ -29,8 +30,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Default route - always redirect to login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Public landing page as default route */}
+          <Route path="/" element={<Landing />} />
 
           {/* Private routes */}
           <Route

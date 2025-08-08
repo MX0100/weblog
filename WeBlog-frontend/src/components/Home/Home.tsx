@@ -487,7 +487,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-container">
-      {/* Navigation bar */}
+      {/* App navbar (functionality preserved, style aligned with landing) */}
       <Navbar
         user={currentUser}
         notificationCount={totalNotificationCount}
@@ -535,7 +535,7 @@ const Home: React.FC = () => {
                   <div className="loading-message">Loading posts...</div>
                 ) : posts.length === 0 ? (
                   <div className="no-posts-message">
-                    <p>No posts yet.</p>
+                    <p>Welcome to WeBlog!</p>
                     <p>Create your first post to get started!</p>
                   </div>
                 ) : (

@@ -2,7 +2,7 @@ name: 🚀 Deploy to Production
 
 on:
   push:
-    branches: [main, master]
+    branches: [master]
   workflow_dispatch:
     inputs:
       environment:

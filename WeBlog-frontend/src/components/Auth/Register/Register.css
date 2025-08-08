@@ -1,17 +1,25 @@
 /* Register Component Styles */
-.auth-container {
+.auth-page {
+  background: radial-gradient(
+      1200px 600px at 50% -100px,
+      #8ed0ff33,
+      transparent
+    ),
+    linear-gradient(180deg, #e7f4ff 0%, #ffffff 70%);
   min-height: 100vh;
+}
+.auth-container {
+  min-height: calc(100vh - 64px);
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  padding: 32px 20px;
 }
 
 .auth-card {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(17, 41, 75, 0.12);
   padding: 40px;
   width: 100%;
   max-width: 400px;
@@ -73,44 +81,9 @@
   text-decoration: underline;
 }
 
-/* Gender selector styles */
-.gender-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.gender-option {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.gender-option:hover {
-  border-color: #007bff;
-  background-color: #f8f9ff;
-}
-
-.gender-option.selected {
-  border-color: #007bff;
-  background-color: #e7f3ff;
-}
-
-.gender-option input[type="radio"] {
-  margin: 0;
-}
-
-.gender-option label {
-  cursor: pointer;
-  font-size: 12px;
-  margin: 0;
-  flex: 1;
+/* Gender dropdown overrides the default input height */
+#gender.form-input {
+  height: 44px;
 }
 
 /* Responsive design */
@@ -127,7 +100,5 @@
     font-size: 24px;
   }
 
-  .gender-options {
-    grid-template-columns: 1fr;
-  }
+  /* no extra rules needed for dropdown */
 }

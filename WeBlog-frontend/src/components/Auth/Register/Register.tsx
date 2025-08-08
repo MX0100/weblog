@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { userAPI } from "../../../services/api";
 import type { RegisterRequest, Gender } from "../../../types/api";
 import "./Register.css";
+import PublicNavbar from "../../common/PublicNavbar/PublicNavbar";
 
 // Gender options configuration
 const GENDER_OPTIONS: { value: Gender; label: string }[] = [
@@ -78,121 +79,119 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2 className="auth-title">Join WeBlog</h2>
-        <p className="auth-subtitle">Create your account</p>
+    <div className="auth-page">
+      <PublicNavbar />
+      <div className="auth-container">
+        <div className="auth-card">
+          <h2 className="auth-title">Join WeBlog</h2>
+          <p className="auth-subtitle">Create your account</p>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="username" className="form-label">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="3-20 characters, letters, numbers, underscore only"
-              pattern="^[a-zA-Z0-9_]{3,20}$"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="nickname" className="form-label">
-              Nickname
-            </label>
-            <input
-              type="text"
-              id="nickname"
-              name="nickname"
-              value={formData.nickname}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Enter your nickname"
-              maxLength={50}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="6-50 characters"
-              minLength={6}
-              maxLength={50}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Gender</label>
-            <div className="gender-options">
-              {GENDER_OPTIONS.map((option) => (
-                <div
-                  key={option.value}
-                  className={`gender-option ${
-                    formData.gender === option.value ? "selected" : ""
-                  }`}
-                  onClick={() => handleGenderChange(option.value)}
-                >
-                  <input
-                    type="radio"
-                    name="gender"
-                    value={option.value}
-                    checked={formData.gender === option.value}
-                    onChange={() => handleGenderChange(option.value)}
-                  />
-                  <label>{option.label}</label>
-                </div>
-              ))}
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="username" className="form-label">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="3-20 characters, letters, numbers, underscore only"
+                pattern="^[a-zA-Z0-9_]{3,20}$"
+                required
+              />
             </div>
-          </div>
 
-          {error && <div className="error-message">{error}</div>}
-          {success && (
-            <div className="success-message">
-              {success}{" "}
-              <Link to="/login" className="auth-link">
-                Go now
-              </Link>
+            <div className="form-group">
+              <label htmlFor="nickname" className="form-label">
+                Nickname
+              </label>
+              <input
+                type="text"
+                id="nickname"
+                name="nickname"
+                value={formData.nickname}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Enter your nickname"
+                maxLength={50}
+                required
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            className="btn btn-primary auth-submit-btn"
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="loading-text">
-                <span className="spinner"></span>
-                Registering...
-              </span>
-            ) : (
-              "Register"
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="6-50 characters"
+                minLength={6}
+                maxLength={50}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="gender" className="form-label">
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                className="form-input"
+                value={formData.gender}
+                onChange={(e) => handleGenderChange(e.target.value as Gender)}
+              >
+                {GENDER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {error && <div className="error-message">{error}</div>}
+            {success && (
+              <div className="success-message">
+                {success}{" "}
+                <Link to="/login" className="auth-link">
+                  Go now
+                </Link>
+              </div>
             )}
-          </button>
-        </form>
 
-        <div className="auth-footer">
-          <p>
-            Already have an account?{" "}
-            <Link to="/login" className="auth-link">
-              Sign in now
-            </Link>
-          </p>
+            <button
+              type="submit"
+              className="btn btn-primary auth-submit-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="loading-text">
+                  <span className="spinner"></span>
+                  Registering...
+                </span>
+              ) : (
+                "Register"
+              )}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p>
+              Already have an account?{" "}
+              <Link to="/login" className="auth-link">
+                Sign in now
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

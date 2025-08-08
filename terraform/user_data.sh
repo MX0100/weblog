@@ -82,7 +82,7 @@ EOF
 
 systemctl enable weblog.service
 
-# 配置CloudWatch Agent
+# 配置CloudWatch Agent - 免费套餐优化版本
 cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
 {
   "logs": {
@@ -103,36 +103,25 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
     "metrics_collected": {
       "cpu": {
         "measurement": [
-          "cpu_usage_idle",
-          "cpu_usage_iowait",
-          "cpu_usage_user",
-          "cpu_usage_system"
+          "cpu_usage_active"
         ],
-        "metrics_collection_interval": 60
+        "metrics_collection_interval": 300,
+        "totalcpu": true
       },
       "disk": {
         "measurement": [
           "used_percent"
         ],
-        "metrics_collection_interval": 60,
+        "metrics_collection_interval": 300,
         "resources": [
-          "*"
-        ]
-      },
-      "diskio": {
-        "measurement": [
-          "io_time"
-        ],
-        "metrics_collection_interval": 60,
-        "resources": [
-          "*"
+          "/"
         ]
       },
       "mem": {
         "measurement": [
           "mem_used_percent"
         ],
-        "metrics_collection_interval": 60
+        "metrics_collection_interval": 300
       }
     }
   }

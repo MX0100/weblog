@@ -1,0 +1,152 @@
+.landing-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  /* 统一导航高度 */
+  min-height: 56px;
+}
+.landing-navbar .container {
+  /* 统一容器宽度，与登录页保持一致 */
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.landing-navbar .nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px; /* 固定行高 */
+  padding: 0; /* 高度由容器撑起，移除额外内边距 */
+}
+.landing-navbar .brand-link {
+  font-weight: 800;
+  font-size: 1.4rem; /* 与登录页导航一致 */
+  text-decoration: none;
+  color: #0b2b4a;
+}
+.landing-navbar .nav-links {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+}
+.landing-navbar .nav-links a {
+  color: #0b2b4a;
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1; /* 保证与固定高度配合不拉伸 */
+}
+.landing-navbar .nav-actions .btn {
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.landing-page .container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.hero {
+  background: var(--page-gradient);
+  padding: 80px 0 60px;
+  text-align: center;
+}
+/* removed audience toggle styles */
+.headline {
+  font-size: 42px;
+  line-height: 1.15;
+  color: #0b2b4a;
+  margin: 12px 0;
+}
+.headline .muted {
+  color: #80a6c7;
+  font-weight: 800;
+}
+.headline .highlight {
+  color: #0d7bd6;
+}
+.subhead {
+  color: #3a6b97;
+  max-width: 720px;
+  margin: 0 auto 18px;
+}
+.cta-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.btn {
+  display: inline-block;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 12px 18px;
+}
+.btn-primary {
+  background: #0d7bd6;
+  color: white;
+}
+.btn-ghost {
+  border: 1px solid #b1d4f3;
+  color: #0d7bd6;
+}
+.btn-dark {
+  background: #1f2937;
+  color: white;
+}
+.btn-lg {
+  padding: 14px 22px;
+}
+
+.how {
+  padding: 56px 0;
+  background: #ffffff;
+}
+.how h3 {
+  text-align: center;
+  color: #0b2b4a;
+  margin-bottom: 22px;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.step {
+  padding: 18px;
+  border: 1px solid #e6eef7;
+  border-radius: 14px;
+  background: #fbfdff;
+}
+.step-title {
+  font-weight: 700;
+  color: #0d7bd6;
+  margin-bottom: 6px;
+}
+
+.contact {
+  padding: 56px 0;
+  background: #f7fbff;
+}
+.contact h3 {
+  text-align: center;
+  color: #0b2b4a;
+  margin-bottom: 10px;
+}
+.contact p {
+  text-align: center;
+  color: #2d5275;
+}
+
+.footer {
+  padding: 24px 0;
+  border-top: 1px solid #eef3f9;
+  text-align: center;
+  color: #5a7da3;
+  background: #ffffff;
+}

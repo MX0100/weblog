@@ -12,12 +12,12 @@ services:
       target: development
     working_dir: /app
     volumes:
-      # 源码热重载 - 排除build目录避免冲突
+      # 源码热重载 - 排除 build 目录避免冲突
       - ./src:/app/src:cached
       - ./build.gradle:/app/build.gradle:ro
       - ./settings.gradle:/app/settings.gradle:ro
-      # Gradle缓存持久化
-      - gradle-cache:/home/weblog/.gradle
+      # Gradle 缓存（跨平台简单绑定，避免依赖 PWD 环境变量）
+      - ./.gradle-cache:/home/weblog/.gradle
       # 构建目录
       - ./build:/app/build:delegated
     ports:
@@ -103,13 +103,7 @@ services:
 # ======================================
 # 开发专用卷配置
 # ======================================
-volumes:
-  gradle-cache:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/.gradle-cache
+# 使用相对路径绑定，无需额外卷配置
 
 # ======================================
 # 开发专用网络配置

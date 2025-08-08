@@ -136,13 +136,13 @@
 
 .user-name {
   font-weight: 600;
-  color: white;
+  color: #0b2b4a;
   font-size: 1rem;
 }
 
 .relationship-status {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #0b2b4a;
   font-style: italic;
 }
 

@@ -21,8 +21,8 @@ services:
     volumes:
       # Source code hot reload
       - ./:/app
-      # Gradle cache persistence
-      - gradle-cache:/root/.gradle
+      # Gradle cache persistence (bind to project .gradle-cache for stable permissions)
+      - ./.gradle-cache:/root/.gradle
     environment:
       # ======================================
       # Environment Profile
@@ -158,8 +158,6 @@ volumes:
   postgres_data:
     driver: local
   pgadmin_data:
-    driver: local
-  gradle-cache:
     driver: local
   redis_data:
     driver: local

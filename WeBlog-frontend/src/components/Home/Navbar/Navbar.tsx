@@ -140,9 +140,9 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           <div className="navbar-center">
-            <h2 className="welcome-text">
+            {/* <h2 className="welcome-text">
               Welcome back, {user.nickname || user.username}!
-            </h2>
+            </h2> */}
           </div>
 
           <div className="navbar-right">
@@ -184,7 +184,7 @@ const Navbar: React.FC<NavbarProps> = ({
               onClick={onNotificationClick}
             />
 
-            <button className="btn btn-secondary logout-btn" onClick={onLogout}>
+            <button className="btn btn-dark" onClick={onLogout}>
               Logout
             </button>
           </div>
@@ -206,7 +206,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   placeholder="Enter username"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSearchUser()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearchUser()}
                   disabled={searchLoading}
                 />
                 <button
