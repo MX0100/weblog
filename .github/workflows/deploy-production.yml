@@ -4,10 +4,24 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "部署环境 (dev/staging/prod)"
+        required: false
+        default: "prod"
 
 env:
-  AWS_REGION: us-west-2
-  S3_BUCKET: weblog-frontend-20250721-3566
+  # 统一环境控制
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'prod' }}
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-west-2' }}
+  S3_BUCKET: ${{ secrets.S3_BUCKET }}
+  CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
+  # 数据库与应用密钥（请在 Repo Secrets 配置以下值）
+  DB_HOST: ${{ secrets.PROD_DB_HOST }}
+  DB_NAME: ${{ secrets.PROD_DB_NAME }}
+  DB_USERNAME: ${{ secrets.PROD_DB_USERNAME }}
+  DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+  JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
 
 jobs:
   # ======================================
@@ -78,32 +92,33 @@ jobs:
 
           # 获取EC2实例ID
           INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=weblog-prod-web-server" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=weblog-${{ env.ENVIRONMENT }}-web-server" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
 
           echo "📍 目标实例: $INSTANCE_ID"
 
-          # 直接使用数据库配置信息（从terraform获取）
-          echo "🗄️ 数据库配置:"
-          echo "  - Host: weblog-prod-db.c12m62s4kp9h.us-west-2.rds.amazonaws.com"
-          echo "  - Database: weblog_prod"
-          echo "  - Username: weblog_admin"
+          if [ "$INSTANCE_ID" = "None" ] || [ -z "$INSTANCE_ID" ]; then
+            echo "❌ 未找到匹配的EC2实例 (tag: weblog-${{ env.ENVIRONMENT }}-web-server)"
+            exit 1
+          fi
 
-          # 通过SSM执行部署命令，设置环境变量
+          # 通过SSM执行部署命令：在EC2上规范化docker-compose文件并注入最新环境变量
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids $INSTANCE_ID \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "echo \"🔄 开始更新应用...\"",
               "cd /opt/weblog",
-              "echo \"🔧 设置环境变量...\"",
-              "export DB_HOST=weblog-prod-db.c12m62s4kp9h.us-west-2.rds.amazonaws.com",
-              "export DB_NAME=weblog_prod", 
-              "export DB_USERNAME=weblog_admin",
-              "export DB_PASSWORD=Ykx001107.",
-              "export JWT_SECRET=8cXFktH8yFvFr4p0U4fNyCxi/8qenuVbZG2lvQiYrdg=",
-              "export CORS_ORIGINS=https://${{ secrets.CLOUDFRONT_DOMAIN }}",
+              "echo \"📝 生成标准化 docker-compose.prod.yml...\"",
+              "bash -lc \"cat > docker-compose.prod.yml << 'EOF'\nversion: '3.8'\n\nservices:\n  weblog-backend:\n    image: mx0100/weblog-backend:latest\n    container_name: weblog-backend\n    ports:\n      - '8080:8080'\n    environment:\n      - SPRING_PROFILES_ACTIVE=prod\n      - DB_HOST=\\${DB_HOST}\n      - DB_NAME=\\${DB_NAME}\n      - DB_USERNAME=\\${DB_USERNAME}\n      - DB_PASSWORD=\\${DB_PASSWORD}\n      - JWT_SECRET=\\${JWT_SECRET}\n      - CORS_ORIGINS=\\${CORS_ORIGINS}\n      - JAVA_OPTS=-Xms256m -Xmx512m -Dspring.devtools.restart.enabled=false\n    restart: unless-stopped\n    healthcheck:\n      test: ['CMD', 'curl', '-f', 'http://localhost:8080/actuator/health']\n      interval: 30s\n      timeout: 10s\n      retries: 3\n      start_period: 60s\n    logging:\n      driver: 'awslogs'\n      options:\n        awslogs-group: '/aws/ec2/weblog-${{ env.ENVIRONMENT }}'\n        awslogs-region: '${{ env.AWS_REGION }}'\n        awslogs-stream: 'weblog-backend'\nEOF\"",
+              "echo \"🔧 设置运行时环境变量...\"",
+              "export DB_HOST=${{ env.DB_HOST }}",
+              "export DB_NAME=${{ env.DB_NAME }}",
+              "export DB_USERNAME=${{ env.DB_USERNAME }}",
+              "export DB_PASSWORD=${{ env.DB_PASSWORD }}",
+              "export JWT_SECRET=${{ env.JWT_SECRET }}",
+              "export CORS_ORIGINS=https://${{ env.CLOUDFRONT_DOMAIN }}",
               "echo \"📥 拉取最新镜像...\"",
               "docker-compose -f docker-compose.prod.yml pull",
               "echo \"🔄 重启应用容器...\"",
@@ -111,9 +126,9 @@ jobs:
               "echo \"⏳ 等待应用启动...\"",
               "sleep 30",
               "echo \"✅ 应用更新完成\"",
-              "docker ps | grep weblog",
+              "docker ps | grep weblog-backend || true",
               "echo \"🔍 检查应用日志...\"",
-              "docker logs weblog-prod --tail 10 2>&1 || echo No logs available"
+              "docker logs weblog-backend --tail 50 2>&1 || echo No logs available"
             ]' \
             --query "Command.CommandId" \
             --output text)
@@ -170,8 +185,8 @@ jobs:
       - name: 🏗️ Build frontend for production
         working-directory: WeBlog-frontend
         env:
-          VITE_API_BASE_URL: https://${{ secrets.CLOUDFRONT_DOMAIN }}
-          VITE_WS_URL: wss://${{ secrets.CLOUDFRONT_DOMAIN }}/ws
+          VITE_API_BASE_URL: https://${{ env.CLOUDFRONT_DOMAIN }}
+          VITE_WS_URL: wss://${{ env.CLOUDFRONT_DOMAIN }}/ws
           VITE_ENV_NAME: production
         run: |
           echo "🏗️ 构建生产环境前端..."
@@ -183,6 +198,7 @@ jobs:
         working-directory: WeBlog-frontend
         run: |
           echo "📤 上传前端文件到S3..."
+          if [ -z "${{ env.S3_BUCKET }}" ]; then echo "❌ S3_BUCKET 未配置为仓库机密"; exit 1; fi
           aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ \
             --delete \
             --cache-control "public,max-age=31536000" \
@@ -200,8 +216,9 @@ jobs:
       - name: 🔄 Invalidate CloudFront cache
         run: |
           echo "🔄 清除CloudFront缓存..."
+          if [ -z "${{ env.CLOUDFRONT_DOMAIN }}" ]; then echo "❌ CLOUDFRONT_DOMAIN 未配置为仓库机密"; exit 1; fi
           DISTRIBUTION_ID=$(aws cloudfront list-distributions \
-            --query "DistributionList.Items[?Comment=='weblog-prod-cloudfront'].Id" \
+            --query "DistributionList.Items[?DomainName=='${{ env.CLOUDFRONT_DOMAIN }}'].Id | [0]" \
             --output text)
 
           if [ "$DISTRIBUTION_ID" != "None" ] && [ "$DISTRIBUTION_ID" != "" ]; then
@@ -236,14 +253,14 @@ jobs:
       - name: 🔍 Check backend health
         run: |
           echo "🔍 检查后端健康状态..."
-          BACKEND_URL="https://${{ secrets.CLOUDFRONT_DOMAIN }}/actuator/health"
+          BACKEND_URL="https://${{ env.CLOUDFRONT_DOMAIN }}/actuator/health"
 
           for i in {1..10}; do
             echo "🔍 健康检查尝试 $i/10..."
             
             if curl -f -s $BACKEND_URL | grep -q "UP"; then
               echo "✅ 后端健康检查通过！"
-              curl -s $BACKEND_URL | jq '.'
+              (curl -s $BACKEND_URL | jq '.' ) || curl -s $BACKEND_URL || true
               break
             fi
             
@@ -259,7 +276,7 @@ jobs:
       - name: 🔍 Check frontend accessibility
         run: |
           echo "🔍 检查前端可访问性..."
-          FRONTEND_URL="https://${{ secrets.CLOUDFRONT_DOMAIN }}"
+          FRONTEND_URL="https://${{ env.CLOUDFRONT_DOMAIN }}"
 
           if curl -f -s $FRONTEND_URL > /dev/null; then
             echo "✅ 前端访问正常！"
@@ -273,10 +290,10 @@ jobs:
         run: |
           echo "🎉 部署完成摘要："
           echo "================================"
-          echo "🌐 前端地址: https://${{ secrets.CLOUDFRONT_DOMAIN }}"
-          echo "🔧 后端API: https://${{ secrets.CLOUDFRONT_DOMAIN }}/api"
-          echo "💓 健康检查: https://${{ secrets.CLOUDFRONT_DOMAIN }}/actuator/health"
-          echo "🔌 WebSocket: wss://${{ secrets.CLOUDFRONT_DOMAIN }}/ws/notifications"
+          echo "🌐 前端地址: https://${{ env.CLOUDFRONT_DOMAIN }}"
+          echo "🔧 后端API: https://${{ env.CLOUDFRONT_DOMAIN }}/api"
+          echo "💓 健康检查: https://${{ env.CLOUDFRONT_DOMAIN }}/actuator/health"
+          echo "🔌 WebSocket: wss://${{ env.CLOUDFRONT_DOMAIN }}/ws/notifications"
           echo "🚀 部署时间: $(date)"
           echo "📝 Git提交: ${{ github.sha }}"
           echo "================================"
@@ -307,7 +324,7 @@ jobs:
           # 如果所有关键步骤都成功
           if [ "$BACKEND_STATUS" == "success" ] && [ "$FRONTEND_STATUS" == "success" ] && [ "$HEALTH_STATUS" == "success" ]; then
             echo "🎉 生产环境部署成功！"
-            echo "🌐 应用地址: https://${{ secrets.CLOUDFRONT_DOMAIN }}"
+          echo "🌐 应用地址: https://${{ env.CLOUDFRONT_DOMAIN }}"
             echo "⏰ 部署时间: $(date)"
             echo "📝 Git提交: ${{ github.sha }}"
           else
